@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "id": "resourcepackupdater",
+  "version": "${version}",
+  "name": "资源包更新程序",
+  "description": "在游戏启动时自动在线更新资源包。",
+  "authors": [
+    "Zbx1425"
+  ],
+  "contact": {
+    "homepage": "https://www.zbx1425.cn"
+  },
+  "license": "MIT",
+  "icon": "icon.png",
+  "environment": "client",
+  "entrypoints": {
+    "preLaunch": [
+      "cn.zbx1425.resourcepackupdater.PreLaunchEntryPoint"
+    ],
+    "modmenu": [
+      "cn.zbx1425.resourcepackupdater.ModMenuApiImpl"
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=0.11.7",
+    "fabric": "*",
+    "minecraft": "1.17.1"
+  }
+}
