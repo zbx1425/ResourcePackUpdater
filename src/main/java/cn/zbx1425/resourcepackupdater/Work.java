@@ -105,7 +105,7 @@ public class Work {
             RSync rsync = new RSync()
                 .source(sourceURL)
                 .destination(Paths.get(sx, "resourcepacks", PACK_DIR_NAME).toAbsolutePath().toString())
-                .archive(true).checksum(true).humanReadable(true).info("progress2");
+                .archive(true).checksum(true).humanReadable(true).iconv("").info("progress2");
 
             PrintWriter finalTcpProgressWriter = tcpProgressWriter;
             StringBuilder stdErrBuilder = new StringBuilder();
