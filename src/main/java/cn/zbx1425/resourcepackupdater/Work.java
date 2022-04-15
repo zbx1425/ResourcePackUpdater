@@ -23,19 +23,23 @@ import java.util.List;
 public class Work {
 
     private static final Logger LOGGER = LogManager.getLogger("ResourcepackUpdater");
-    private static final String DEFAULT_URL = "https://xinghaicity.ldiorstudio.cn/srpack/pack.zip";
+    private static final String DEFAULT_URL = "rsync://xinghaicity.ldiorstudio.cn/srpack";
     private static final String LOCAL_NAME = "pack.zip";
 
     public static String resultMessage = "尚未检查更新";
 
     public static void download() {
-        int udpPortAssign = 29632;
+        final int tcpProgressPort;
+        final ServerSocket tcpServer;
+        PrintWriter tcpProgressWriter = null;
         try {
-            udpPortAssign = findOpenPort();
-        } catch (Exception ignored) {
-
+            tcpServer = new ServerSocket(0, 50, InetAddress.getLocalHost());
+            tcpProgressPort = tcpServer.getLocalPort();
+        } catch (IOException ex) {
+            LOGGER.error(ex);
+            resultMessage = "更新资源包时发生错误：\nException when updating resource pack:\n" + ex.toString();
+            return;
         }
-        final int udpPort = udpPortAssign;
 
         File configFile = new File(FabricLoader.getInstance().getConfigDir().toFile(), "resourcepackupdater.txt");
         String url = DEFAULT_URL;
@@ -49,16 +53,6 @@ public class Work {
         }
         String sx = FabricLoader.getInstance().getGameDir().toString();
 
-        try {
-            new ProcessBuilder(
-                    getJvmPath(), "-cp",
-                    new File(Work.class.getProtectionDomain().getCodeSource().getLocation().toURI()).getPath(),
-                    "cn.zbx1425.resourcepackupdater.IPCHostEntryPoint", Integer.toString(udpPort)
-            ).start();
-            Thread.sleep(1000); // TODO: Something better?
-        } catch (Exception ignored) {
-            ignored.printStackTrace();
-        }
 
         try {
             URL sourceURL = new URL(url);
@@ -70,8 +64,26 @@ public class Work {
             String localShaString = calcSHA1(rFile).trim().toLowerCase();
 
             if (!remoteShaString.equals(localShaString)) {
+                final Socket tcpProgressSocket;
+                try {
+                    new ProcessBuilder(
+                            // "cmd", "/c", "start", "",
+                            getJvmPath(), "-cp",
+                            new File(Work.class.getProtectionDomain().getCodeSource().getLocation().toURI()).getPath(),
+                            "cn.zbx1425.resourcepackupdater.IPCHostEntryPoint", Integer.toString(tcpProgressPort)
+                    ).start();
+                    tcpProgressSocket = tcpServer.accept();
+                } catch (IOException ex) {
+                    LOGGER.error(ex);
+                    resultMessage = "更新资源包时发生错误：\nException when updating resource pack:\n" + ex.toString();
+                    return;
+                }
+
+                tcpProgressWriter = new PrintWriter(tcpProgressSocket.getOutputStream(), true, StandardCharsets.UTF_8);
+
                 LOGGER.info("Resource pack needs update. Starting download.");
-                sendUdpPacket(udpPort, "资源包需要更新。正在开始下载。\nResource pack needs update. Starting download.\n……");
+                tcpProgressWriter.write("资源包需要更新。正在开始下载。\nResource pack needs update. Starting download.\n……\n");
+                tcpProgressWriter.flush();
 
                 // Notify the user
                 /* Runtime.getRuntime().exec(new String[] {
@@ -79,19 +91,25 @@ public class Work {
                     "/c", "echo 正在下载资源包更新,请稍等。下载完后游戏将正常启动。 && echo. && ping localhost -n 6 >nul"
                 }); */
 
+                int fileSize = getFileSize(sourceURL);
+
                 FileOutputStream fos = new FileOutputStream(rFile);
+                PrintWriter finalTcpProgressWriter = tcpProgressWriter;
                 ProgressOutputStream pos = new ProgressOutputStream(fos, new ProgressOutputStream.WriteListener() {
                     long lastAmount = 0;
-                    final long noticeDivisor = 1024;
+                    final long noticeDivisor = 16384;
 
                     @Override
                     public void registerWrite(long amountOfBytesWritten) {
                         if (lastAmount / noticeDivisor != amountOfBytesWritten / noticeDivisor) {
                             try {
-                                sendUdpPacket(udpPort, "正在下载资源包更新。\nDownloading resource pack update.\n" + (lastAmount / 1024) + " KiB ...");
-                            } catch (Exception ignored) {
-
+                                finalTcpProgressWriter.write("正在下载资源包更新。\nDownloading resource pack update.\n"
+                                        + (amountOfBytesWritten / 1024) + " / " + (fileSize / 1024) + " KiB ...\n");
+                                finalTcpProgressWriter.flush();
+                            } catch (Exception ex) {
+                                System.out.println(ex.toString());
                             }
+
                             lastAmount = amountOfBytesWritten;
                         }
                     }
@@ -117,10 +135,32 @@ public class Work {
             resultMessage = "更新资源包时发生错误：\nException when updating resource pack:\n" + ex.toString();
         }
         try {
-            sendUdpPacket(udpPort, resultMessage);
-            sendUdpPacket(udpPort, "end");
+            if (tcpProgressWriter != null) {
+                tcpProgressWriter.write(resultMessage + "\n");
+                tcpProgressWriter.write("end\n");
+                tcpProgressWriter.flush();
+                tcpServer.close();
+            }
         } catch (Exception ignored) {
 
+        }
+    }
+
+    private static int getFileSize(URL url) {
+        URLConnection conn = null;
+        try {
+            conn = url.openConnection();
+            if(conn instanceof HttpURLConnection) {
+                ((HttpURLConnection)conn).setRequestMethod("HEAD");
+            }
+            conn.getInputStream();
+            return conn.getContentLength();
+        } catch (IOException e) {
+            return 0;
+        } finally {
+            if(conn instanceof HttpURLConnection) {
+                ((HttpURLConnection)conn).disconnect();
+            }
         }
     }
 
@@ -182,24 +222,6 @@ public class Work {
             hexChars[j * 2 + 1] = HEX_ARRAY[v & 0x0F];
         }
         return new String(hexChars, StandardCharsets.UTF_8);
-    }
-
-    public static void sendUdpPacket(int port, String msg) throws IOException {
-        DatagramSocket socket = new DatagramSocket();
-        byte[] buf = msg.getBytes(StandardCharsets.UTF_8);
-        DatagramPacket packet = new DatagramPacket(buf, buf.length, InetAddress.getLoopbackAddress(), port);
-        socket.send(packet);
-        socket.close();
-    }
-
-    // TODO: Subjects to race condition.
-    private static Integer findOpenPort() throws IOException {
-        try (
-                ServerSocket socket = new ServerSocket(0);
-        ) {
-            return socket.getLocalPort();
-
-        }
     }
 
     private static String getJvmPath() {

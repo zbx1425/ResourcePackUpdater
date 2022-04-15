@@ -4,10 +4,9 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
-import java.io.IOException;
+import java.io.*;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 
 public class IPCHostEntryPoint {
 
@@ -17,7 +16,7 @@ public class IPCHostEntryPoint {
     public static void main(String[] args) {
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         Border emptyBorder = new EmptyBorder(10, 20, 20, 10);
-        labels[0] = new JLabel("等待进程间通讯UDP连接");
+        labels[0] = new JLabel("如Minecraft主界面已出本窗口仍未关闭，那么直接关掉即可");
         labels[1] = new JLabel("Awaiting for IPC UDP connection");
         labels[2] = new JLabel("……");
         for (JLabel label : labels) label.setBorder(emptyBorder);
@@ -31,35 +30,32 @@ public class IPCHostEntryPoint {
         frame.setVisible(true);
 
         try {
-            new UdpServer(Integer.parseInt(args[0])).start();
+            new TcpClient(Integer.parseInt(args[0])).start();
         } catch (Exception ex) {
-            ex.printStackTrace();
+            frame.dispose();
         }
     }
 
-    public static class UdpServer extends Thread {
+    public static class TcpClient extends Thread {
 
         public boolean running;
-        private final DatagramSocket socket;
-        private final byte[] buf = new byte[1024];
+        private final Socket socket;
 
-        public UdpServer(int port) throws SocketException {
-            socket = new DatagramSocket(new InetSocketAddress("127.0.0.1", port));
+        public TcpClient(int port) throws IOException {
+            socket = new Socket(InetAddress.getLocalHost(), port);
         }
 
         public void run() {
-            running = true;
+            try {
+                InputStream inputStream = socket.getInputStream();
+                BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
+                running = true;
 
-            while (running) {
-                DatagramPacket packet = new DatagramPacket(buf, buf.length);
-                try {
-                    Arrays.fill(buf, (byte) 0);
-                    socket.receive(packet);
-                    InetAddress address = packet.getAddress();
-                    int port = packet.getPort();
-                    packet = new DatagramPacket(buf, buf.length, address, port);
-                    final String received = new String(packet.getData(), 0, packet.getLength(), StandardCharsets.UTF_8).trim();
-                    System.out.println(received);
+                int i = 0;
+
+                while (running) {
+                    String received = reader.readLine().trim();
+                    // System.out.println(received);
                     if (received.equals("end")) {
                         running = false;
                         try {
@@ -69,18 +65,30 @@ public class IPCHostEntryPoint {
                         }
                         frame.dispose();
                     } else {
+                        final int labelIndex = i;
                         SwingUtilities.invokeLater(() -> {
-                            String[] tokens = received.split("\n");
-                            for (int i = 0; i < 3; ++i) {
-                                labels[i].setText(tokens[i]);
-                            }
+                            labels[labelIndex].setText(received);
                         });
+                        ++i;
+                        if (i >= 3) i = 0;
                     }
-                } catch (IOException e) {
-                    e.printStackTrace();
                 }
+                socket.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+                SwingUtilities.invokeLater(() -> {
+                    labels[0].setText(e.getMessage());
+                    labels[1].setText(e.getMessage());
+                    labels[2].setText(e.getMessage());
+                });
+                running = false;
+                try {
+                    Thread.sleep(3000);
+                } catch (Exception ignored) {
+
+                }
+                frame.dispose();
             }
-            socket.close();
         }
     }
 }
