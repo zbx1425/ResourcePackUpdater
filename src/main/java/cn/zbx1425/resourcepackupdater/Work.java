@@ -1,5 +1,11 @@
 package cn.zbx1425.resourcepackupdater;
 
+import com.github.fracpete.processoutput4j.core.StreamingProcessOutputType;
+import com.github.fracpete.processoutput4j.core.StreamingProcessOwner;
+import com.github.fracpete.processoutput4j.output.CollectingProcessOutput;
+import com.github.fracpete.processoutput4j.output.ConsoleOutputProcessOutput;
+import com.github.fracpete.processoutput4j.output.StreamingProcessOutput;
+import com.github.fracpete.rsync4j.RSync;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonPrimitive;
@@ -24,7 +30,8 @@ public class Work {
 
     private static final Logger LOGGER = LogManager.getLogger("ResourcepackUpdater");
     private static final String DEFAULT_URL = "rsync://xinghaicity.ldiorstudio.cn/srpack";
-    private static final String LOCAL_NAME = "pack.zip";
+    private static final String OBSOLETE_LOCAL_NAME = "pack.zip";
+    private static final String PACK_DIR_NAME = "SyncedPack";
 
     public static String resultMessage = "尚未检查更新";
 
@@ -42,98 +49,121 @@ public class Work {
         }
 
         File configFile = new File(FabricLoader.getInstance().getConfigDir().toFile(), "resourcepackupdater.txt");
-        String url = DEFAULT_URL;
+        String sourceURL = DEFAULT_URL;
         if (configFile.exists()) {
             try {
-                url = Files.readString(configFile.toPath()).trim();
-                if (url.isEmpty()) url = DEFAULT_URL;
+                sourceURL = Files.readString(configFile.toPath()).trim();
+                if (sourceURL.isEmpty()) sourceURL = DEFAULT_URL;
             } catch (Exception ignored) {
 
             }
         }
         String sx = FabricLoader.getInstance().getGameDir().toString();
+        String userHomeBackup = System.getProperty("user.home");
 
+        // Very dirty, but RSync4J doesn't expose the PID to us, so...
+        try {
+            ProcessHandle
+                .allProcesses()
+                .filter(p -> p.info().command().map(c -> c.contains("rsync")).orElse(false))
+                .forEach(processHandle -> {
+                    LOGGER.info("Killing: " + processHandle.info().command().orElse(Long.toString(processHandle.pid())));
+                    processHandle.destroy();
+                });
+        } catch (Exception ex) {
+            LOGGER.error(ex);
+            // ignore
+        }
 
         try {
-            URL sourceURL = new URL(url);
-            URL checksumURL = new URL(url + ".sha1");
-            File rFile = Paths.get(sx, "resourcepacks", LOCAL_NAME).toFile();
-            rFile.createNewFile();
+            File oldFile = Paths.get(sx, "resourcepacks", OBSOLETE_LOCAL_NAME).toFile();
+            if (oldFile.exists()) oldFile.delete();
 
-            String remoteShaString = new String(checksumURL.openStream().readAllBytes()).trim().toLowerCase();
-            String localShaString = calcSHA1(rFile).trim().toLowerCase();
-
-            if (!remoteShaString.equals(localShaString)) {
-                final Socket tcpProgressSocket;
-                try {
-                    new ProcessBuilder(
-                            // "cmd", "/c", "start", "",
-                            getJvmPath(), "-cp",
-                            new File(Work.class.getProtectionDomain().getCodeSource().getLocation().toURI()).getPath(),
-                            "cn.zbx1425.resourcepackupdater.IPCHostEntryPoint", Integer.toString(tcpProgressPort)
-                    ).start();
-                    tcpProgressSocket = tcpServer.accept();
-                } catch (IOException ex) {
-                    LOGGER.error(ex);
-                    resultMessage = "更新资源包时发生错误：\nException when updating resource pack:\n" + ex.toString();
-                    return;
-                }
-
+            Socket tcpProgressSocket = null;
+            try {
+                new ProcessBuilder(
+                        // "cmd", "/c", "start", "",
+                        getJvmPath(), "-cp",
+                        new File(Work.class.getProtectionDomain().getCodeSource().getLocation().toURI()).getPath(),
+                        "cn.zbx1425.resourcepackupdater.IPCHostEntryPoint", Integer.toString(tcpProgressPort)
+                ).start();
+                tcpProgressSocket = tcpServer.accept();
                 tcpProgressWriter = new PrintWriter(tcpProgressSocket.getOutputStream(), true, StandardCharsets.UTF_8);
+            } catch (IOException ex) {
+                // No info, no big deal
+                LOGGER.warn(ex);
+            }
 
-                LOGGER.info("Resource pack needs update. Starting download.");
-                tcpProgressWriter.write("资源包需要更新。正在开始下载。\nResource pack needs update. Starting download.\n……\n");
+            LOGGER.info("Starting download.");
+            if (tcpProgressWriter != null) {
+                tcpProgressWriter.write("正在开始下载。\nStarting download.\n……\n");
                 tcpProgressWriter.flush();
+            }
 
-                // Notify the user
-                /* Runtime.getRuntime().exec(new String[] {
-                    "cmd", "/c", "start", "cmd",
-                    "/c", "echo 正在下载资源包更新,请稍等。下载完后游戏将正常启动。 && echo. && ping localhost -n 6 >nul"
-                }); */
+            System.setProperty("user.home", sx);
 
-                int fileSize = getFileSize(sourceURL);
+            RSync rsync = new RSync()
+                .source(sourceURL)
+                .destination(Paths.get(sx, "resourcepacks", PACK_DIR_NAME).toAbsolutePath().toString())
+                .archive(true).checksum(true).humanReadable(true).info("progress2");
 
-                FileOutputStream fos = new FileOutputStream(rFile);
-                PrintWriter finalTcpProgressWriter = tcpProgressWriter;
-                ProgressOutputStream pos = new ProgressOutputStream(fos, new ProgressOutputStream.WriteListener() {
-                    long lastAmount = 0;
-                    final long noticeDivisor = 16384;
+            PrintWriter finalTcpProgressWriter = tcpProgressWriter;
+            StringBuilder stdErrBuilder = new StringBuilder();
+            StreamingProcessOutput processOutput = new StreamingProcessOutput(new StreamingProcessOwner() {
+                public StreamingProcessOutputType getOutputType() {
+                    return StreamingProcessOutputType.BOTH;
+                }
+                public void processOutput(String line, boolean stdout) {
+                    if (!stdout) {
+                        stdErrBuilder.append(line).append("\n");
+                    }
+                    if (finalTcpProgressWriter != null) {
+                        try {
+                            finalTcpProgressWriter.write("正在下载资源包更新。\nDownloading resource pack update.\n");
+                            finalTcpProgressWriter.write((stdout ? "" : "STDERR: ") + line + "\n");
+                            finalTcpProgressWriter.flush();
+                        } catch (Exception ignored) {
 
-                    @Override
-                    public void registerWrite(long amountOfBytesWritten) {
-                        if (lastAmount / noticeDivisor != amountOfBytesWritten / noticeDivisor) {
-                            try {
-                                finalTcpProgressWriter.write("正在下载资源包更新。\nDownloading resource pack update.\n"
-                                        + (amountOfBytesWritten / 1024) + " / " + (fileSize / 1024) + " KiB ...\n");
-                                finalTcpProgressWriter.flush();
-                            } catch (Exception ex) {
-                                System.out.println(ex.toString());
-                            }
-
-                            lastAmount = amountOfBytesWritten;
                         }
                     }
-                });
-                IOUtils.copy(sourceURL.openStream(), pos);
-
-                localShaString = calcSHA1(rFile).trim().toLowerCase();
-                if (!remoteShaString.equals(localShaString)) {
-                    LOGGER.error("Resource pack update finished, but SHA1 mismatches. Remote: "
-                            + remoteShaString + ", Local: " + localShaString);
-                    resultMessage = "检查到更新版本；已经下载，但下载到的文件有问题。\nResource pack update finished, but SHA1 mismatches.\nRemote: "
-                            + remoteShaString + ", Local:" + localShaString;
-                } else {
-                    LOGGER.info("Resource pack update finished. SHA1: " + remoteShaString);
-                    resultMessage = "检查到更新版本；已经下载。\nResource pack update finished.\nSHA1: " + remoteShaString;
                 }
-            } else {
-                LOGGER.info("Resource pack does not need update. SHA1: " + remoteShaString);
-                resultMessage = "已检查；资源包无需更新。\nChecked; Resource pack does not need update.\nSHA1: " + remoteShaString;
+            });
+
+            boolean launchRsyncSucceed = false;
+            try {
+                ProcessBuilder builder = rsync.builder();
+                processOutput.monitor(builder);
+                launchRsyncSucceed = true;
+            } catch (IllegalStateException ex) {
+                if (ex.getMessage().contains("not installed")) {
+                    LOGGER.error(ex);
+                    resultMessage = "请您安装 rsync, ssh 和 ssh-keygen。\nPlease install rsync, ssh and ssh-keygen.\n" + ex.toString();
+                } else if (ex.getMessage().contains("windows32")) {
+                    LOGGER.error(ex);
+                    resultMessage = "此版本的资源包更新程序不支持32位Windows，请联系作者获取32位版。\n" +
+                            "32-bit Windows not supported, contact author for a 32-bit version of this resource pack updater.\n" + ex.toString();
+                } else {
+                    throw ex;
+                }
+            }
+
+            if (launchRsyncSucceed) {
+                LOGGER.info("Rsync exit code: " + processOutput.getExitCode());
+                if (!processOutput.hasSucceeded()) {
+                    LOGGER.error(stdErrBuilder.toString());
+                    resultMessage = "更新资源包时发生错误：\nException when updating resource pack:\n" + stdErrBuilder.toString().split("\n")[0];
+                } else {
+                    LOGGER.info("Resource pack update finished.");
+                    resultMessage = "更新已经完成。\nResource pack update finished.\n";
+                }
             }
         } catch (Exception ex) {
             LOGGER.error(ex);
             resultMessage = "更新资源包时发生错误：\nException when updating resource pack:\n" + ex.toString();
         }
+
+        System.setProperty("user.home", userHomeBackup);
+
         try {
             if (tcpProgressWriter != null) {
                 tcpProgressWriter.write(resultMessage + "\n");
@@ -171,7 +201,7 @@ public class Work {
                 LOGGER.info("Creating options.txt in order to enable resource pack.");
                 optionFile.createNewFile();
                 Files.writeString(optionFile.toPath(),
-                        "resourcePacks:[\"vanilla\",\"Fabric Mods\",\"file/" + LOCAL_NAME + "\"]");
+                        "resourcePacks:[\"vanilla\",\"Fabric Mods\",\"file/" + PACK_DIR_NAME + "\"]");
             } else {
                 boolean needWrite = false;
                 StringBuilder sb = new StringBuilder();
@@ -180,10 +210,12 @@ public class Work {
                     String[] tokens = line.trim().split(":", 2);
                     if (tokens[0].toLowerCase().trim().equals("resourcepacks")) {
                         JsonArray ja = (JsonArray) new JsonParser().parse(tokens[1]);
-                        if (!ja.contains(new JsonPrimitive("file/" + LOCAL_NAME))) {
+                        JsonPrimitive target = new JsonPrimitive("file/" + PACK_DIR_NAME);
+                        if (ja.size() == 0 || !ja.get(ja.size() - 1).equals(target)) {
                             LOGGER.info("Resource pack not enabled in options.txt, enabling.");
                             needWrite = true;
-                            ja.add("file/" + LOCAL_NAME);
+                            if (ja.contains(target)) ja.remove(target);
+                            ja.add(target);
                         }
                         sb.append("resourcePacks:").append(ja.toString()).append("\r\n");
                     } else {

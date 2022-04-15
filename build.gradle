@@ -28,7 +28,6 @@ dependencies {
     modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 
     implementation(include('com.github.fracpete:rsync4j-core:3.2.3-9'))
-    implementation(include('com.github.fracpete:rsync4j-windows-x86_64:3.2.3-5'))
 
     modApi "com.terraformersmc:modmenu:${project["modmenu_version"]}"
 }
