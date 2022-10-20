@@ -73,19 +73,14 @@ public class GlProgressScreen implements ProgressReceiver {
     }
 
     public void redrawScreen(boolean swap) throws GlHelper.MinecraftStoppingException {
-        GlHelper.clearScreen(0.078f, 0.210f, 0.480f);
-        GlHelper.begin();
+        // GlHelper.clearScreen(0.078f, 0.210f, 0.480f);
         var window = Minecraft.getInstance().getWindow();
         final int FONT_SIZE = 24;
         final int LINE_HEIGHT = 30;
-        // GlHelper.drawString(20, 20, window.getWidth() - 40, LINE_HEIGHT, LINE_HEIGHT,
-        //        "Resource Pack Updater © Zbx1425", 0xFFFFFF00, false, true);
-        RenderSystem.setShaderTexture(0, GlHelper.PRELOAD_HEADER_TEXTURE);
-        GlHelper.blit(20, 20, 512, 32, 0, 0, 1, 1, 0xFFFFFFFF);
-        GlHelper.end();
 
         GlHelper.begin();
         RenderSystem.setShaderTexture(0, GlHelper.PRELOAD_FONT_TEXTURE);
+        GlHelper.drawBlueGradientBackground();
         if (exception == null) {
             GlHelper.drawString(20, 60, window.getWidth() - 40, LINE_HEIGHT * 2, FONT_SIZE,
                     String.format("%3d%%\n%3d%%\n", Math.round(primaryProgress * 100), Math.round(secondaryProgress * 100)),
@@ -140,10 +135,17 @@ public class GlProgressScreen implements ProgressReceiver {
                         0xFFFFFFFF, true, true);
             }
             final int LOG_FONT_SIZE = 16;
-            GlHelper.drawString(20, 60 + LINE_HEIGHT * 2, window.getWidth() - 40,  window.getHeight() - 100, LOG_FONT_SIZE,
+            GlHelper.drawString(20, 60 + LINE_HEIGHT * 2 + 10, window.getWidth() - 40,  window.getHeight() - 100 - 10, LOG_FONT_SIZE,
                     Throwables.getStackTraceAsString(exception),
                     0xFFDDDDDD, false, false);
         }
+        GlHelper.end();
+
+        GlHelper.begin();
+        // GlHelper.drawString(20, 20, window.getWidth() - 40, LINE_HEIGHT, LINE_HEIGHT,
+        //        "Resource Pack Updater © Zbx1425", 0xFFFFFF00, false, true);
+        RenderSystem.setShaderTexture(0, GlHelper.PRELOAD_HEADER_TEXTURE);
+        GlHelper.blit(20, 20, 512, 32, 0, 0, 1, 1, 0xFFFFFFFF);
         GlHelper.end();
 
         if (swap) {

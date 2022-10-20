@@ -70,6 +70,8 @@ public class RemoteMetadata {
 
     private static void urlToStream(URL url, OutputStream target, ProgressReceiver cb) throws IOException {
         HttpURLConnection httpConnection = (HttpURLConnection) (url.openConnection());
+        httpConnection.setConnectTimeout(10000);
+        httpConnection.setReadTimeout(10000);
         long fileSize = httpConnection.getContentLength();
         final long completeFileSize = fileSize > 0 ? fileSize : Integer.MAX_VALUE;
 
