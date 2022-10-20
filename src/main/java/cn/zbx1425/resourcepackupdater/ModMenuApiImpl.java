@@ -1,5 +1,6 @@
 package cn.zbx1425.resourcepackupdater;
 
+import cn.zbx1425.resourcepackupdater.gui.ConfigScreen;
 import com.terraformersmc.modmenu.api.ConfigScreenFactory;
 import com.terraformersmc.modmenu.api.ModMenuApi;
 

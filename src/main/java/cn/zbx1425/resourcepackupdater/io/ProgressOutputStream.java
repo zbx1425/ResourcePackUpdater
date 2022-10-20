@@ -1,4 +1,5 @@
-package cn.zbx1425.resourcepackupdater;
+package cn.zbx1425.resourcepackupdater.io;
+
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -6,12 +7,13 @@ import java.io.OutputStream;
 public class ProgressOutputStream extends OutputStream {
 
     public interface WriteListener {
-        void registerWrite(long amountOfBytesWritten);
+        void registerWrite(long amountOfBytesWritten) throws IOException;
     }
 
     private final OutputStream outstream;
     private long bytesWritten = 0;
     private final WriteListener writeListener;
+
     public ProgressOutputStream(OutputStream outstream, WriteListener writeListener) {
         this.outstream = outstream;
         this.writeListener = writeListener;

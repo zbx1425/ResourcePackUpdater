@@ -1,10 +1,19 @@
 plugins {
-    id 'fabric-loom' version '0.10-SNAPSHOT'
+    id 'fabric-loom' version '0.12-SNAPSHOT'
     id 'maven-publish'
 }
 
 version = project.mod_version
 group = project.maven_group
+
+def default_minecraft_version = "1.18.2"
+def minecraft_version = project.properties.containsKey("buildVersion") ? project.getProperties().get("buildVersion") : default_minecraft_version
+def is_1_16 = (minecraft_version as String).startsWith("1.16")
+def is_1_17 = (minecraft_version as String).startsWith("1.17")
+def is_1_18 = (minecraft_version as String).startsWith("1.18")
+
+rootProject.ext.fabric_api_version = is_1_16 ? rootProject.fabric_version_1_16 : is_1_17 ? rootProject.fabric_version_1_17 : is_1_18 ? rootProject.fabric_version_1_18 : rootProject.fabric_version_1_19
+rootProject.ext.mod_menu_version = is_1_16 ? rootProject.mod_menu_version_1_16 : is_1_17 ? rootProject.mod_menu_version_1_17 : is_1_18 ? rootProject.mod_menu_version_1_18 : rootProject.mod_menu_version_1_19
 
 repositories {
     // Add repositories to retrieve artifacts from in here.
@@ -20,12 +29,12 @@ repositories {
 
 dependencies {
     // To change the versions see the gradle.properties file
-    minecraft "com.mojang:minecraft:${project.minecraft_version}"
-    mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
-    modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+    minecraft "com.mojang:minecraft:${minecraft_version}"
+    mappings loom.officialMojangMappings()
+    modImplementation "net.fabricmc:fabric-loader:${project.fabric_loader_version}"
 
     // Fabric API. This is technically optional, but you probably want it anyway.
-    modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+    modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
 
     implementation(include('com.github.fracpete:rsync4j-core:3.2.3-9'))
     include 'com.github.fracpete:processoutput4j:0.0.11'
@@ -33,7 +42,7 @@ dependencies {
     include 'commons-lang:commons-lang:2.6'
     include 'commons-io:commons-io:2.7'
 
-    modApi "com.terraformersmc:modmenu:${project["modmenu_version"]}"
+    modApi "com.terraformersmc:modmenu:${project.mod_menu_version}"
 }
 
 processResources {

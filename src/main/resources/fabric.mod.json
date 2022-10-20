@@ -15,7 +15,7 @@
   "environment": "client",
   "entrypoints": {
     "preLaunch": [
-      "cn.zbx1425.resourcepackupdater.PreLaunchEntryPoint"
+      "cn.zbx1425.resourcepackupdater.ResourcePackUpdater"
     ],
     "modmenu": [
       "cn.zbx1425.resourcepackupdater.ModMenuApiImpl"
@@ -24,6 +24,9 @@
   "depends": {
     "fabricloader": ">=0.11.7",
     "fabric": "*",
-    "minecraft": "1.17.1"
-  }
+    "minecraft": ">=1.17"
+  },
+  "mixins": [
+    "resourcepackupdater.mixins.json"
+  ]
 }
