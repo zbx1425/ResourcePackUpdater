@@ -1,10 +1,10 @@
 package cn.zbx1425.resourcepackupdater.gui;
 
 import cn.zbx1425.resourcepackupdater.io.ProgressReceiver;
+import com.google.common.base.Throwables;
 import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
-import org.apache.commons.lang.exception.ExceptionUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -49,7 +49,7 @@ public class GlProgressScreen implements ProgressReceiver {
     public void setException(Exception exception) throws GlHelper.MinecraftStoppingException {
         this.exception = exception;
         this.paused = true;
-        System.out.println(ExceptionUtils.getFullStackTrace(exception));
+        System.out.println(Throwables.getStackTraceAsString(exception));
         redrawScreen(true);
     }
 
@@ -141,7 +141,7 @@ public class GlProgressScreen implements ProgressReceiver {
             }
             final int LOG_FONT_SIZE = 16;
             GlHelper.drawString(20, 60 + LINE_HEIGHT * 2, window.getWidth() - 40,  window.getHeight() - 100, LOG_FONT_SIZE,
-                    ExceptionUtils.getFullStackTrace(exception),
+                    Throwables.getStackTraceAsString(exception),
                     0xFFDDDDDD, false, false);
         }
         GlHelper.end();

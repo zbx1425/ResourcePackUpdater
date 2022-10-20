@@ -36,12 +36,6 @@ dependencies {
     // Fabric API. This is technically optional, but you probably want it anyway.
     modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
 
-    implementation(include('com.github.fracpete:rsync4j-core:3.2.3-9'))
-    include 'com.github.fracpete:processoutput4j:0.0.11'
-    include 'net.sourceforge.argparse4j:argparse4j:0.6.0'
-    include 'commons-lang:commons-lang:2.6'
-    include 'commons-io:commons-io:2.7'
-
     modApi "com.terraformersmc:modmenu:${project.mod_menu_version}"
 }
 
