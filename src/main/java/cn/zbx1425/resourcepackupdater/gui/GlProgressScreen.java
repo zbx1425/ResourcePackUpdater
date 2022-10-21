@@ -1,5 +1,6 @@
 package cn.zbx1425.resourcepackupdater.gui;
 
+import cn.zbx1425.resourcepackupdater.ResourcePackUpdater;
 import cn.zbx1425.resourcepackupdater.io.ProgressReceiver;
 import com.google.common.base.Throwables;
 import com.mojang.blaze3d.platform.InputConstants;
@@ -18,10 +19,20 @@ public class GlProgressScreen implements ProgressReceiver {
     private Exception exception;
     private boolean paused;
 
+    private int logViewOffset = 0;
+
     @Override
     public void printLog(String line) throws GlHelper.MinecraftStoppingException {
         logs.add(line);
         primaryInfo = line;
+        ResourcePackUpdater.LOGGER.info(line);
+
+        final int LOG_LINE_HEIGHT = 20;
+        float logBegin = 60 + LOG_LINE_HEIGHT * 3 + 40;
+        float usableLogHeight = Minecraft.getInstance().getWindow().getHeight() - logBegin - 20;
+        int logLines = (int) Math.floor(usableLogHeight / LOG_LINE_HEIGHT);
+        logViewOffset = Math.max(0, logs.size() - logLines);
+
         redrawScreen(true);
     }
 
@@ -49,13 +60,35 @@ public class GlProgressScreen implements ProgressReceiver {
     public void setException(Exception exception) throws GlHelper.MinecraftStoppingException {
         this.exception = exception;
         this.paused = true;
-        System.out.println(Throwables.getStackTraceAsString(exception));
+        ResourcePackUpdater.LOGGER.error(exception);
         redrawScreen(true);
     }
 
     public boolean pause(boolean swap) throws GlHelper.MinecraftStoppingException {
-        paused = !InputConstants.isKeyDown(Minecraft.getInstance().getWindow().getWindow(), InputConstants.KEY_RETURN);
-        if (paused) redrawScreen(swap);
+        var glfwWindow = Minecraft.getInstance().getWindow().getWindow();
+        paused = !InputConstants.isKeyDown(glfwWindow, InputConstants.KEY_RETURN);
+        if (paused) {
+            final int LOG_LINE_HEIGHT = 20;
+            float logBegin = 60 + LOG_LINE_HEIGHT * 3 + 40;
+            float usableLogHeight = Minecraft.getInstance().getWindow().getHeight() - logBegin - 20;
+            int logLines = (int) Math.floor(usableLogHeight / LOG_LINE_HEIGHT);
+            int maxLogViewOffset = Math.max(0, logs.size() - logLines);
+
+            if (InputConstants.isKeyDown(glfwWindow, InputConstants.KEY_HOME)) {
+                logViewOffset = 0;
+            } else if (InputConstants.isKeyDown(glfwWindow, InputConstants.KEY_END)) {
+                logViewOffset = maxLogViewOffset;
+            } else if (InputConstants.isKeyDown(glfwWindow, InputConstants.KEY_PAGEUP)) {
+                logViewOffset = Math.max(0, logViewOffset - logLines);
+            } else if (InputConstants.isKeyDown(glfwWindow, InputConstants.KEY_PAGEDOWN)) {
+                logViewOffset = Math.min(maxLogViewOffset, logViewOffset + logLines);
+            } else if (InputConstants.isKeyDown(glfwWindow, InputConstants.KEY_UP)) {
+                logViewOffset = Math.max(0, logViewOffset - 1);
+            } else if (InputConstants.isKeyDown(glfwWindow, InputConstants.KEY_DOWN)) {
+                logViewOffset = Math.min(maxLogViewOffset, logViewOffset + 1);
+            }
+            redrawScreen(swap);
+        }
         return paused;
     }
 
@@ -73,7 +106,7 @@ public class GlProgressScreen implements ProgressReceiver {
     }
 
     public void redrawScreen(boolean swap) throws GlHelper.MinecraftStoppingException {
-        // GlHelper.clearScreen(0.078f, 0.210f, 0.480f);
+        GlHelper.clearScreen(1f, 0f, 1f);
         var window = Minecraft.getInstance().getWindow();
         final int FONT_SIZE = 24;
         final int LINE_HEIGHT = 30;
@@ -86,6 +119,7 @@ public class GlProgressScreen implements ProgressReceiver {
                     String.format("%3d%%\n%3d%%\n", Math.round(primaryProgress * 100), Math.round(secondaryProgress * 100)),
                     0xFFFFFFFF, true, true);
             if (paused) {
+                GlHelper.drawString(window.getWidth() - 144 - 20, 20, 144, 16, 16, "Scroll AVAIL", 0xFFFFFFFF, false, true);
                 int backColor = System.currentTimeMillis() % 400 >= 200 ? 0xFF008800 : 0xFF000000;
                 GlHelper.blit(0, 60 + LINE_HEIGHT * 2, window.getWidth(), LINE_HEIGHT, backColor);
                 int color = System.currentTimeMillis() % 400 < 200 ? 0xFFFF0000 : 0xFFFFFF00;
@@ -111,11 +145,9 @@ public class GlProgressScreen implements ProgressReceiver {
             final int LOG_FONT_SIZE = 16;
             final int LOG_LINE_HEIGHT = 20;
             float logBegin = 60 + LOG_LINE_HEIGHT * 3 + 40;
-            float usableLogHeight = window.getHeight() - logBegin - 20;
-            int logLines = (int) Math.floor(usableLogHeight / LOG_LINE_HEIGHT);
-            int logBeginIndex = Math.max(0, logs.size() - logLines);
-            for (int i = Math.max(0, logs.size() - logLines); i < logs.size(); i++) {
-                GlHelper.drawString(20, logBegin + LOG_LINE_HEIGHT * (i - logBeginIndex), window.getWidth() - 40, usableLogHeight, LOG_FONT_SIZE,
+            float usableLogHeight = Minecraft.getInstance().getWindow().getHeight() - logBegin - 20;
+            for (int i = logViewOffset; i < logs.size(); i++) {
+                GlHelper.drawString(20, logBegin + LOG_LINE_HEIGHT * (i - logViewOffset), window.getWidth() - 40, usableLogHeight, LOG_FONT_SIZE,
                         logs.get(i), 0xFFDDDDDD, false, true);
             }
         } else {
@@ -123,6 +155,7 @@ public class GlProgressScreen implements ProgressReceiver {
                     "There was an error!",
                     0xFFFF0000, false, true);
             if (paused) {
+                GlHelper.drawString(window.getWidth() - 144 - 20, 20, 144, 16, 16, "Scroll AVAIL", 0xFFFFFFFF, false, true);
                 int backColor = System.currentTimeMillis() % 400 >= 200 ? 0xFF880000 : 0xFF000000;
                 GlHelper.blit(0, 60 + LINE_HEIGHT, window.getWidth(), LINE_HEIGHT, backColor);
                 int color = System.currentTimeMillis() % 400 < 200 ? 0xFFFF0000 : 0xFFFFFF00;

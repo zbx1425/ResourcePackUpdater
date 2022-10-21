@@ -25,12 +25,19 @@ repositories {
         name = "TerraformersMC"
         url = uri("https://maven.terraformersmc.com/releases")
     }
+    maven {
+        name = 'ParchmentMC'
+        url = 'https://maven.parchmentmc.org'
+    }
 }
 
 dependencies {
     // To change the versions see the gradle.properties file
     minecraft "com.mojang:minecraft:${minecraft_version}"
-    mappings loom.officialMojangMappings()
+    mappings loom.layered() {
+        officialMojangMappings()
+        parchment("org.parchmentmc.data:parchment-1.18.2:2022.09.04@zip")
+    }
     modImplementation "net.fabricmc:fabric-loader:${project.fabric_loader_version}"
 
     // Fabric API. This is technically optional, but you probably want it anyway.

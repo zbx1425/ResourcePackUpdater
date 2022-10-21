@@ -30,10 +30,11 @@ public class Dispatcher {
             cb.printLog("Scanning local files ...");
             localMetadata.scanDir();
             cb.amendLastLog("Done");
+            cb.printLog("Used cached checksum for " + localMetadata.hashCache.entries.size() + " files.");
             byte[] localChecksum = localMetadata.getDirChecksum();
             cb.printLog("Local directory checksum is " + Hex.encodeHexString(localChecksum));
 
-            if (localMetadata.files.size() == 0) {
+            if (localMetadata.files.size() < 1) {
                 if (source.hasArchive) {
                     Path archiveFilePath = Paths.get(baseDir, "..", ResourcePackUpdater.CONFIG.localPackName + ".zip");
 

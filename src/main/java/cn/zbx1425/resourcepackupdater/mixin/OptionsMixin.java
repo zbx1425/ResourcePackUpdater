@@ -20,6 +20,5 @@ public class OptionsMixin {
         }
         options.resourcePacks.add(expectedEntry);
         options.incompatibleResourcePacks.remove(expectedEntry);
-        options.save();
     }
 }

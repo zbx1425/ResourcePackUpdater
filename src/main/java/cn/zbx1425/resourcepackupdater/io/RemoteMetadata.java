@@ -87,9 +87,7 @@ public class RemoteMetadata {
                         long deltaT = System.currentTimeMillis() - lastTime;
                         if (deltaT < 1) deltaT = 1000;
                         String message;
-                        message = String.format(": %6d KiB / %6d KiB, %5d KiB/s",
-                                amountOfBytesWritten / 1024, completeFileSize / 1024,
-                                Math.round((amountOfBytesWritten - lastAmount) / 1024f / (deltaT / 1000f)));
+                        message = String.format(": %6d KiB / %6d KiB", amountOfBytesWritten / 1024, completeFileSize / 1024);
                         cb.setSecondaryProgress(amountOfBytesWritten * 1f / completeFileSize, message);
                         lastAmount = amountOfBytesWritten;
                         lastTime = System.currentTimeMillis();

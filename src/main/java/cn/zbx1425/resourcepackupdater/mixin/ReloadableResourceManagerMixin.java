@@ -4,6 +4,7 @@ import cn.zbx1425.resourcepackupdater.ResourcePackUpdater;
 import cn.zbx1425.resourcepackupdater.gui.GlHelper;
 import cn.zbx1425.resourcepackupdater.io.Dispatcher;
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.client.Minecraft;
 import net.minecraft.server.packs.PackResources;
 import net.minecraft.server.packs.resources.ReloadInstance;
 import net.minecraft.server.packs.resources.ReloadableResourceManager;
@@ -35,6 +36,8 @@ public class ReloadableResourceManagerMixin {
                     Thread.sleep(50);
                 }
             }
+
+            Minecraft.getInstance().options.save();
         } catch (Exception ignored) {
 
         }
