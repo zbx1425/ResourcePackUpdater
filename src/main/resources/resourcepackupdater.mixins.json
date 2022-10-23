@@ -6,9 +6,9 @@
   "mixins": [
   ],
   "client": [
+    "MinecraftMixin",
     "MultiPackResourceManagerMixin",
-    "OptionsMixin",
-    "ReloadableResourceManagerMixin"
+    "OptionsScreenMixin"
   ],
   "server": [],
   "injectors": {
