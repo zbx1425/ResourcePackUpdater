@@ -1,19 +1,15 @@
 plugins {
-    id 'fabric-loom' version '0.12-SNAPSHOT'
+    id 'fabric-loom' version '1.0-SNAPSHOT'
     id 'maven-publish'
 }
 
 version = project.mod_version
 group = project.maven_group
 
-def default_minecraft_version = "1.18.2"
-def minecraft_version = project.properties.containsKey("buildVersion") ? project.getProperties().get("buildVersion") : default_minecraft_version
-def is_1_16 = (minecraft_version as String).startsWith("1.16")
-def is_1_17 = (minecraft_version as String).startsWith("1.17")
-def is_1_18 = (minecraft_version as String).startsWith("1.18")
+def minecraft_version = "1.19.2"
 
-rootProject.ext.fabric_api_version = is_1_16 ? rootProject.fabric_version_1_16 : is_1_17 ? rootProject.fabric_version_1_17 : is_1_18 ? rootProject.fabric_version_1_18 : rootProject.fabric_version_1_19
-rootProject.ext.mod_menu_version = is_1_16 ? rootProject.mod_menu_version_1_16 : is_1_17 ? rootProject.mod_menu_version_1_17 : is_1_18 ? rootProject.mod_menu_version_1_18 : rootProject.mod_menu_version_1_19
+rootProject.ext.fabric_api_version = rootProject.fabric_version
+rootProject.ext.mod_menu_version = rootProject.mod_menu_version
 
 repositories {
     // Add repositories to retrieve artifacts from in here.
