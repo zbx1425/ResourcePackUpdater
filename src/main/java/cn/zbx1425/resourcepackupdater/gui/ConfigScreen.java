@@ -4,22 +4,18 @@ import cn.zbx1425.resourcepackupdater.Config;
 import cn.zbx1425.resourcepackupdater.ResourcePackUpdater;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
-import net.minecraft.client.gui.GuiComponent;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.renderer.GameRenderer;
-import net.minecraft.network.chat.TextComponent;
+import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 
 public class ConfigScreen extends Screen {
 
     public ConfigScreen() {
-        super(new TextComponent("ResourcePackUpdater Config"));
+        super(Component.translatable("ResourcePackUpdater Config"));
     }
 
     private boolean isShowingLog = false;
@@ -32,14 +28,14 @@ public class ConfigScreen extends Screen {
         final int PADDING = 10;
         int btnWidthOuter = (width - PADDING * 2) / 2;
         int btnWidthInner = btnWidthOuter - PADDING * 2;
-        Button btnShowLog = new Button(PADDING + PADDING, 40, btnWidthInner, 20, new TextComponent("Show Logs from Last Run"), (btn) -> {
+        Button btnShowLog = new Button(PADDING + PADDING, 40, btnWidthInner, 20, Component.translatable("Show Logs from Last Run"), (btn) -> {
             isShowingLog = true;
         });
-        Button btnReload = new Button(PADDING + btnWidthOuter + PADDING, 40, btnWidthInner, 20, new TextComponent("Update & Reload"), (btn) -> {
+        Button btnReload = new Button(PADDING + btnWidthOuter + PADDING, 40, btnWidthInner, 20, Component.translatable("Update & Reload"), (btn) -> {
             assert minecraft != null;
             minecraft.reloadResourcePacks();
         });
-        Button btnReturn = new Button(PADDING + btnWidthOuter + PADDING, height - 40, btnWidthInner, 20, new TextComponent("Return"), (btn) -> {
+        Button btnReturn = new Button(PADDING + btnWidthOuter + PADDING, height - 40, btnWidthInner, 20, Component.translatable("Return"), (btn) -> {
             assert minecraft != null;
             minecraft.setScreen(null);
         });
@@ -49,7 +45,7 @@ public class ConfigScreen extends Screen {
 
         int btnY = 90;
         for (Config.SourceProperty source : ResourcePackUpdater.CONFIG.sourceList) {
-            Button btnUseSource = new Button(PADDING + PADDING, btnY, btnWidthInner, 20, new TextComponent(source.name), (btn) -> {
+            Button btnUseSource = new Button(PADDING + PADDING, btnY, btnWidthInner, 20, Component.translatable(source.name), (btn) -> {
                 ResourcePackUpdater.CONFIG.activeSource = source;
                 try {
                     ResourcePackUpdater.CONFIG.save();

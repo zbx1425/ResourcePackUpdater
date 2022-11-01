@@ -1,51 +1,21 @@
 package cn.zbx1425.resourcepackupdater.gui;
 
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.packs.metadata.MetadataSectionSerializer;
 import net.minecraft.server.packs.resources.Resource;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
 import java.io.InputStream;
 
-public class PreloadTextureResource implements Resource {
+public class PreloadTextureResource extends Resource {
 
-    private ResourceLocation resourceLocation;
+    private final ResourceLocation resourceLocation;
 
     public PreloadTextureResource(ResourceLocation resourceLocation) {
+        super(resourceLocation.toDebugFileName(), InputStream::nullInputStream);
         this.resourceLocation = resourceLocation;
     }
 
     @Override
-    public ResourceLocation getLocation() {
-        return resourceLocation;
-    }
-
-    @Override
-    public InputStream getInputStream() {
-        return getClass().getResourceAsStream("/assets/" + resourceLocation.getNamespace()
-                + "/" + resourceLocation.getPath());
-    }
-
-    @Override
-    public boolean hasMetadata() {
-        return false;
-    }
-
-    @Nullable
-    @Override
-    public <T> T getMetadata(@NotNull MetadataSectionSerializer<T> metadataSectionSerializer) {
-        return null;
-    }
-
-    @Override
-    public String getSourceName() {
-        return resourceLocation.toDebugFileName();
-    }
-
-    @Override
-    public void close() throws IOException {
-
+    public InputStream open() {
+        return getClass().getResourceAsStream("/assets/" + resourceLocation.getNamespace() + "/" + resourceLocation.getPath());
     }
 }

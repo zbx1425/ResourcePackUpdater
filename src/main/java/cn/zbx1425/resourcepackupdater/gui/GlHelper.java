@@ -12,11 +12,8 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.resources.ResourceLocation;
-import org.lwjgl.opengl.GL30;
-import org.lwjgl.opengl.GL33;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
 
 public class GlHelper {
 
