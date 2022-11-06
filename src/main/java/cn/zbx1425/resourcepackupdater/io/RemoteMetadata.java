@@ -1,5 +1,6 @@
 package cn.zbx1425.resourcepackupdater.io;
 
+import cn.zbx1425.resourcepackupdater.ResourcePackUpdater;
 import com.google.gson.JsonParser;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.io.IOUtils;
@@ -26,13 +27,13 @@ public class RemoteMetadata {
     }
 
     public byte[] fetchDirChecksum(ProgressReceiver cb) throws Exception {
-        return Hex.decodeHex(httpGetString(baseUrl + "/metadata.sha1", cb));
+        return Hex.decodeHex(httpGetString(baseUrl + "/metadata.sha1", cb).toCharArray());
     }
 
     public void fetch(ProgressReceiver cb) throws Exception {
         dirs.clear();
         files.clear();
-        var metadataObj = JsonParser.parseString(
+        var metadataObj = (ResourcePackUpdater.JSON_PARSER).parse(
                 httpGetString(baseUrl + "/metadata.json", cb)
         ).getAsJsonObject();
         dirs.clear();
@@ -41,7 +42,7 @@ public class RemoteMetadata {
             dirs.add(entry.getKey());
         }
         for (var entry : metadataObj.get("files").getAsJsonObject().entrySet()) {
-            files.put(entry.getKey(), Hex.decodeHex(entry.getValue().getAsJsonObject().get("sha1").getAsString()));
+            files.put(entry.getKey(), Hex.decodeHex(entry.getValue().getAsJsonObject().get("sha1").getAsString().toCharArray()));
         }
     }
 
@@ -99,7 +100,7 @@ public class RemoteMetadata {
     }
 
     public void httpGetZippedPackage(Path localPath, ProgressReceiver cb) throws Exception {
-        byte[] expectedSha = Hex.decodeHex(httpGetString(baseUrl + "/pack.zip.sha1", cb));
+        byte[] expectedSha = Hex.decodeHex(httpGetString(baseUrl + "/pack.zip.sha1", cb).toCharArray());
 
         if (Files.isRegularFile(localPath)) {
             byte[] localSha = HashCache.getDigest(localPath.toFile());

@@ -9,6 +9,7 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.network.chat.TextComponent;
+import net.minecraft.network.chat.TranslatableComponent;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -19,7 +20,7 @@ import java.util.List;
 public class ConfigScreen extends Screen {
 
     public ConfigScreen() {
-        super(new TextComponent("ResourcePackUpdater Config"));
+        super(new TranslatableComponent("gui.resourcepackupdater.config.title"));
     }
 
     private boolean isShowingLog = false;
@@ -32,14 +33,14 @@ public class ConfigScreen extends Screen {
         final int PADDING = 10;
         int btnWidthOuter = (width - PADDING * 2) / 2;
         int btnWidthInner = btnWidthOuter - PADDING * 2;
-        Button btnShowLog = new Button(PADDING + PADDING, 40, btnWidthInner, 20, new TextComponent("Show Logs from Last Run"), (btn) -> {
+        Button btnShowLog = new Button(PADDING + PADDING, 40, btnWidthInner, 20, new TranslatableComponent("gui.resourcepackupdater.config.showlogs"), (btn) -> {
             isShowingLog = true;
         });
-        Button btnReload = new Button(PADDING + btnWidthOuter + PADDING, 40, btnWidthInner, 20, new TextComponent("Update & Reload"), (btn) -> {
+        Button btnReload = new Button(PADDING + btnWidthOuter + PADDING, 40, btnWidthInner, 20, new TranslatableComponent("gui.resourcepackupdater.config.reload"), (btn) -> {
             assert minecraft != null;
             minecraft.reloadResourcePacks();
         });
-        Button btnReturn = new Button(PADDING + btnWidthOuter + PADDING, height - 40, btnWidthInner, 20, new TextComponent("Return"), (btn) -> {
+        Button btnReturn = new Button(PADDING + btnWidthOuter + PADDING, height - 40, btnWidthInner, 20, new TranslatableComponent("gui.done"), (btn) -> {
             assert minecraft != null;
             minecraft.setScreen(null);
         });
@@ -88,7 +89,7 @@ public class ConfigScreen extends Screen {
             RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
             RenderSystem.setShaderTexture(0, GlHelper.PRELOAD_HEADER_TEXTURE);
             blit(matrices, 10, 10, 256, 16, 0, 0, 512, 32, 512, 32);
-            this.font.drawShadow(matrices, "Source Servers:", 20, 76, 0xFFFFFFFF);
+            this.font.drawShadow(matrices, new TranslatableComponent("gui.resourcepackupdater.config.sourceservers").getString(), 20, 76, 0xFFFFFFFF);
             this.font.drawShadow(matrices, "https://www.zbx1425.cn", 20, height - 40, 0xFFFFFFFF);
             super.render(matrices, mouseX, mouseY, delta);
         }

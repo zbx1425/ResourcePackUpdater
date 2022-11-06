@@ -1,0 +1,7 @@
+{
+  "modmenu.descriptionTranslation.resourcepackupdater": "Updates a resource pack at game launch, or when requested.",
+  "gui.resourcepackupdater.config.title": "ResourcePackUpdater Config",
+  "gui.resourcepackupdater.config.showlogs": "Show Logs from Last Run",
+  "gui.resourcepackupdater.config.reload": "Update & Reload",
+  "gui.resourcepackupdater.config.sourceservers": "Source Servers"
+}

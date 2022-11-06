@@ -1,0 +1,7 @@
+{
+  "modmenu.descriptionTranslation.resourcepackupdater": "在遊戲啟動時自動同步資源，也可按需更新。",
+  "gui.resourcepackupdater.config.title": "資源更新實用程序配置",
+  "gui.resourcepackupdater.config.showlogs": "顯示上次更新情況日誌",
+  "gui.resourcepackupdater.config.reload": "更新並重載資源",
+  "gui.resourcepackupdater.config.sourceservers": "下載源伺服器列表"
+}

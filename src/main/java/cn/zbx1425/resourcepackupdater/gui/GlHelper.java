@@ -3,10 +3,7 @@ package cn.zbx1425.resourcepackupdater.gui;
 import cn.zbx1425.resourcepackupdater.ResourcePackUpdater;
 import com.mojang.blaze3d.platform.Window;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.BufferBuilder;
-import com.mojang.blaze3d.vertex.DefaultVertexFormat;
-import com.mojang.blaze3d.vertex.Tesselator;
-import com.mojang.blaze3d.vertex.VertexFormat;
+import com.mojang.blaze3d.vertex.*;
 import com.mojang.math.Matrix4f;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GameRenderer;
@@ -81,13 +78,21 @@ public class GlHelper {
         }
     }
 
+    private static VertexConsumer withColor(VertexConsumer vc, int color) {
+        int a = (color >>> 24) & 0xFF;
+        int r = (color >>> 16) & 0xFF;
+        int g = (color >>> 8) & 0xFF;
+        int b = color & 0xFF;
+        return vc.color(r, g, b, a);
+    }
+
     public static void drawBlueGradientBackground() {
         final int colorTop = 0xFF03458C;
         final int colorBottom = 0xFF001A3B;
-        bufferBuilder.vertex(-1, 1, 1f).uv(118f/256f, 8f/256f).color(colorTop).endVertex();
-        bufferBuilder.vertex(1, 1, 1f).uv(118f/256f, 8f/256f).color(colorTop).endVertex();
-        bufferBuilder.vertex(1, -1, 1f).uv(118f/256f, 8f/256f).color(colorBottom).endVertex();
-        bufferBuilder.vertex(-1, -1, 1f).uv(118f/256f, 8f/256f).color(colorBottom).endVertex();
+        withColor(bufferBuilder.vertex(-1, 1, 1f).uv(118f/256f, 8f/256f), colorTop).endVertex();
+        withColor(bufferBuilder.vertex(1, 1, 1f).uv(118f/256f, 8f/256f), colorTop).endVertex();
+        withColor(bufferBuilder.vertex(1, -1, 1f).uv(118f/256f, 8f/256f), colorBottom).endVertex();
+        withColor(bufferBuilder.vertex(-1, -1, 1f).uv(118f/256f, 8f/256f), colorBottom).endVertex();
     }
 
     public static void blit(float x1, float y1, float width, float height, float u1, float v1, float u2, float v2, int color) {
@@ -98,10 +103,10 @@ public class GlHelper {
         float glY1 = -(y1 - window.getHeight() / 2f) / (window.getHeight() / 2f);
         float glX2 = (x2 - window.getWidth() / 2f) / (window.getWidth() / 2f);
         float glY2 = -(y2 - window.getHeight() / 2f) / (window.getHeight() / 2f);
-        bufferBuilder.vertex(glX1, glY1, 1f).uv(u1, v1).color(color).endVertex();
-        bufferBuilder.vertex(glX2, glY1, 1f).uv(u2, v1).color(color).endVertex();
-        bufferBuilder.vertex(glX2, glY2, 1f).uv(u2, v2).color(color).endVertex();
-        bufferBuilder.vertex(glX1, glY2, 1f).uv(u1, v2).color(color).endVertex();
+        withColor(bufferBuilder.vertex(glX1, glY1, 1f).uv(u1, v1), color).endVertex();
+        withColor(bufferBuilder.vertex(glX2, glY1, 1f).uv(u2, v1), color).endVertex();
+        withColor(bufferBuilder.vertex(glX2, glY2, 1f).uv(u2, v2), color).endVertex();
+        withColor(bufferBuilder.vertex(glX1, glY2, 1f).uv(u1, v2), color).endVertex();
     }
 
     public static void blit(float x1, float y1, float width, float height, int color) {
@@ -112,10 +117,10 @@ public class GlHelper {
         float glY1 = -(y1 - window.getHeight() / 2f) / (window.getHeight() / 2f);
         float glX2 = (x2 - window.getWidth() / 2f) / (window.getWidth() / 2f);
         float glY2 = -(y2 - window.getHeight() / 2f) / (window.getHeight() / 2f);
-        bufferBuilder.vertex(glX1, glY1, 1f).uv(118f/256f, 8f/256f).color(color).endVertex();
-        bufferBuilder.vertex(glX2, glY1, 1f).uv(118f/256f, 8f/256f).color(color).endVertex();
-        bufferBuilder.vertex(glX2, glY2, 1f).uv(118f/256f, 8f/256f).color(color).endVertex();
-        bufferBuilder.vertex(glX1, glY2, 1f).uv(118f/256f, 8f/256f).color(color).endVertex();
+        withColor(bufferBuilder.vertex(glX1, glY1, 1f).uv(118f/256f, 8f/256f), color).endVertex();
+        withColor(bufferBuilder.vertex(glX2, glY1, 1f).uv(118f/256f, 8f/256f), color).endVertex();
+        withColor(bufferBuilder.vertex(glX2, glY2, 1f).uv(118f/256f, 8f/256f), color).endVertex();
+        withColor(bufferBuilder.vertex(glX1, glY2, 1f).uv(118f/256f, 8f/256f), color).endVertex();
     }
 
     private static final byte[] GLYPH_SIZES = {

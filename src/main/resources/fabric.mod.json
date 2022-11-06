@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "resourcepackupdater",
   "version": "${version}",
-  "name": "Resource Pack Updating Utility",
+  "name": "Resource Synchronization Utility",
   "description": "Updates a resource pack at game launch, or when requested.",
   "authors": [
     "Zbx1425"

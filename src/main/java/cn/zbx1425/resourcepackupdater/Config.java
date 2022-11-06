@@ -30,7 +30,7 @@ public class Config {
         if (!Files.isRegularFile(getConfigFilePath())) {
             save();
         }
-        JsonObject obj = (JsonObject)JsonParser.parseString(Files.readString(getConfigFilePath()));
+        JsonObject obj = (JsonObject)(ResourcePackUpdater.JSON_PARSER).parse(Files.readString(getConfigFilePath()));
         localPackName = obj.get("localPackName").getAsString();
         activeSource = new SourceProperty(obj.get("activeSource").getAsJsonObject());
         if (obj.get("disableBuiltinSources").getAsBoolean()) {
@@ -74,7 +74,7 @@ public class Config {
         ));
         sourceList.add(new SourceProperty(
             "MTR Let's Play (CN, Mirror)",
-        "https://seu.complexstudio.net/jlp-srp", true, false, true
+        "https://seu.complexstudio.net/mirror/zbx1425.mc/jlp-srp", true, false, true
         ));
     }
 

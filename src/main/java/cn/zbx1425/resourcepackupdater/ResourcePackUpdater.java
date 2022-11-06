@@ -3,6 +3,7 @@ package cn.zbx1425.resourcepackupdater;
 import cn.zbx1425.resourcepackupdater.gui.GlHelper;
 import cn.zbx1425.resourcepackupdater.gui.GlProgressScreen;
 import cn.zbx1425.resourcepackupdater.io.Dispatcher;
+import com.google.gson.JsonParser;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.entrypoint.PreLaunchEntrypoint;
 import net.minecraft.client.Minecraft;
@@ -18,6 +19,7 @@ public class ResourcePackUpdater implements PreLaunchEntrypoint {
     public static final String MOD_ID = "resourcepackupdater";
 
     public static final Logger LOGGER = LogManager.getLogger("ResourcePackUpdater");
+    public static final JsonParser JSON_PARSER = new JsonParser();
 
     public static String MOD_VERSION = "";
 
