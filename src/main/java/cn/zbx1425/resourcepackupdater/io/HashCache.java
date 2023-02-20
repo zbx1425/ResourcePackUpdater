@@ -72,7 +72,7 @@ public class HashCache {
     }
 
     public static byte[] getDigest(File file) throws IOException {
-        InputStream fis = new BufferedInputStream(new FileInputStream(file));
+        InputStream fis = new BufferedInputStream(AssetEncryption.wrapInputStream(new FileInputStream(file)));
         int n = 0;
         byte[] buffer = new byte[8192];
         while (n != -1) {

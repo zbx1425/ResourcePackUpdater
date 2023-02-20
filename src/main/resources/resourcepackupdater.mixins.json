@@ -3,9 +3,9 @@
   "minVersion": "0.8",
   "package": "cn.zbx1425.resourcepackupdater.mixin",
   "compatibilityLevel": "JAVA_8",
-  "mixins": [
-  ],
+  "mixins": [],
   "client": [
+    "FolderPackResourcesMixin",
     "MinecraftMixin",
     "MultiPackResourceManagerMixin",
     "OptionsScreenMixin"

@@ -57,13 +57,28 @@ public class RemoteMetadata {
         Files.deleteIfExists(localPath);
 
         URL url = new URL(baseUrl + "/dist/" + file);
-        try (FileOutputStream fos = new FileOutputStream(localPath.toFile())) {
-            urlToStream(url, fos, cb);
-            byte[] expectedSha = files.get(file);
-            byte[] localSha = HashCache.getDigest(localPath.toFile());
-            if (!Arrays.equals(localSha, expectedSha)) {
-                throw new IOException("SHA1 mismatch: " + Hex.encodeHexString(localSha) + " downloaded, " +
-                        Hex.encodeHexString(expectedSha) + " expected");
+        int retryCount = 0;
+        final int MAX_RETRIES = 3;
+        while (true) {
+            try {
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                urlToStream(url, baos, cb);
+                AssetEncryption.writeEncrypted(baos.toByteArray(), localPath.toFile());
+                byte[] expectedSha = files.get(file);
+                byte[] localSha = HashCache.getDigest(localPath.toFile());
+                if (!Arrays.equals(localSha, expectedSha)) {
+                    throw new IOException("SHA1 mismatch: " + Hex.encodeHexString(localSha) + " downloaded, " +
+                            Hex.encodeHexString(expectedSha) + " expected");
+                }
+                return;
+            } catch (Exception ex) {
+                if (retryCount < MAX_RETRIES) {
+                    cb.printLog(ex.toString());
+                    retryCount++;
+                    cb.printLog(String.format("Retrying (%d/%d)", retryCount, MAX_RETRIES));
+                } else {
+                    throw ex;
+                }
             }
         }
     }

@@ -5,6 +5,7 @@ import net.fabricmc.loader.api.FabricLoader;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -19,6 +20,7 @@ public class Config {
     public String localPackName;
     public boolean disableBuiltinSources;
     public boolean pauseWhenSuccess;
+    public File packBaseDirFile;
 
     public Config() {
         setDefaults();
@@ -39,6 +41,7 @@ public class Config {
             sourceList.add(new SourceProperty((JsonObject)source));
         }
         pauseWhenSuccess = obj.get("pauseWhenSuccess").getAsBoolean();
+        packBaseDirFile = new File(getPackBaseDir());
     }
 
     public void save() throws IOException {
@@ -79,7 +82,7 @@ public class Config {
 
     public String getPackBaseDir() {
         String sx = FabricLoader.getInstance().getGameDir().toString();
-        String baseDir = Paths.get(sx, "resourcepacks", ResourcePackUpdater.CONFIG.localPackName).toAbsolutePath().toString();
+        String baseDir = Paths.get(sx, "resourcepacks", localPackName).toAbsolutePath().toString();
         return baseDir;
     }
 

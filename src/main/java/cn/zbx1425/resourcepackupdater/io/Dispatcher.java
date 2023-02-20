@@ -28,41 +28,15 @@ public class Dispatcher {
             remoteMetadata = new RemoteMetadata(source.baseUrl);
 
             cb.printLog("Scanning local files ...");
+            int localCacheSize = localMetadata.hashCache.entries.size();
             localMetadata.scanDir();
             cb.amendLastLog("Done");
-            cb.printLog("Used cached checksum for " + localMetadata.hashCache.entries.size() + " files.");
+            cb.printLog("Hash cache had " + localCacheSize + " files.");
             byte[] localChecksum = localMetadata.getDirChecksum();
             cb.printLog("Local directory checksum is " + Hex.encodeHexString(localChecksum));
 
             if (localMetadata.files.size() < 1) {
-                if (source.hasArchive) {
-                    Path archiveFilePath = Paths.get(baseDir, "..", ResourcePackUpdater.CONFIG.localPackName + ".zip");
-
-                    cb.printLog("This looks like a fresh install. Let's use a pre-compressed package to save time.");
-                    cb.printLog("Downloading archive file ...");
-                    remoteMetadata.baseUrl = source.baseUrl;
-                    remoteMetadata.httpGetZippedPackage(archiveFilePath, cb);
-                    cb.amendLastLog("Done");
-
-                    cb.setProgress(0.8f, 0f);
-                    cb.printLog("Unzipping ...");
-                    LocalMetadata.unzipFileTo(
-                            archiveFilePath.toAbsolutePath().toString(),
-                            Paths.get(baseDir).toFile(),
-                            cb
-                    );
-                    cb.amendLastLog("Done");
-
-                    cb.printLog("Deleting temporary archive file ...");
-                    Files.deleteIfExists(archiveFilePath);
-                    cb.amendLastLog("Done");
-
-                    cb.printLog("Scanning local files ...");
-                    localMetadata.scanDir();
-                    cb.amendLastLog("Done");
-                } else {
-                    cb.printLog("This server does not have a pre-compressed package.");
-                }
+                cb.printLog("This looks like a fresh install.");
             } else {
                 if (source.hasDirHash) {
                     cb.printLog("Downloading remote directory checksum ...");

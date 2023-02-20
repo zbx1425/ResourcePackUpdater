@@ -45,6 +45,7 @@ public class LocalMetadata {
                 if (Files.isDirectory(entry)) {
                     dirs.add(relPath);
                 } else {
+                    AssetEncryption.encryptIfRaw(entry.toFile());
                     files.put(relPath, hashCache.getDigest(relPath, entry.toFile()));
                 }
             }
