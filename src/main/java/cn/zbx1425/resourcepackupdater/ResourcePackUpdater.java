@@ -1,5 +1,6 @@
 package cn.zbx1425.resourcepackupdater;
 
+import cn.zbx1425.resourcepackupdater.drm.ServerLockRegistry;
 import cn.zbx1425.resourcepackupdater.gui.GlHelper;
 import cn.zbx1425.resourcepackupdater.gui.GlProgressScreen;
 import cn.zbx1425.resourcepackupdater.io.Dispatcher;
@@ -43,6 +44,7 @@ public class ResourcePackUpdater implements ModInitializer {
         ResourcePackUpdater.GL_PROGRESS_SCREEN.reset();
         try {
             syncDispatcher.runSync(ResourcePackUpdater.CONFIG.getPackBaseDir(), ResourcePackUpdater.CONFIG.activeSource, ResourcePackUpdater.GL_PROGRESS_SCREEN);
+            ServerLockRegistry.prefetchServerLock(ResourcePackUpdater.CONFIG.packBaseDirFile);
 
             if (ResourcePackUpdater.CONFIG.pauseWhenSuccess || ResourcePackUpdater.GL_PROGRESS_SCREEN.hasException()) {
                 while (ResourcePackUpdater.GL_PROGRESS_SCREEN.pause(true)) {
