@@ -28,10 +28,10 @@ public class Dispatcher {
             remoteMetadata = new RemoteMetadata(source.baseUrl);
 
             cb.printLog("Scanning local files ...");
-            int localCacheSize = localMetadata.hashCache.entries.size();
+            localMetadata.loadHashCache();
+            cb.printLog("Hash cache had " + localMetadata.hashCache.entries.size() + " files.");
             localMetadata.scanDir();
             cb.amendLastLog("Done");
-            cb.printLog("Hash cache had " + localCacheSize + " files.");
             byte[] localChecksum = localMetadata.getDirChecksum();
             cb.printLog("Local directory checksum is " + Hex.encodeHexString(localChecksum));
 

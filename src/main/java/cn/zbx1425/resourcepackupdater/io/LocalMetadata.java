@@ -30,10 +30,13 @@ public class LocalMetadata {
         this.hashCache = new HashCache();
     }
 
+    public void loadHashCache() throws Exception {
+        hashCache.load(Path.of(baseDir, HASH_CACHE_FILE_NAME));
+    }
+
     public void scanDir() throws Exception {
         dirs.clear();
         files.clear();
-        hashCache.load(Path.of(baseDir, HASH_CACHE_FILE_NAME));
 
         Path basePath = Paths.get(baseDir);
         if (!Files.isDirectory(basePath)) {
