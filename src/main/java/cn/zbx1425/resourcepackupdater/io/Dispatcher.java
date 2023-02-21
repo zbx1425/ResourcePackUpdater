@@ -27,10 +27,26 @@ public class Dispatcher {
             localMetadata = new LocalMetadata(baseDir);
             remoteMetadata = new RemoteMetadata(source.baseUrl);
 
+            byte[] remoteChecksum = null;
+
+            if (source.hasDirHash) {
+                cb.printLog("Downloading remote directory checksum ...");
+                remoteChecksum = remoteMetadata.fetchDirChecksum(cb);
+                cb.amendLastLog("Done");
+                cb.printLog("Remote directory checksum is " + Hex.encodeHexString(remoteChecksum));
+            } else {
+                cb.printLog("This server does not have a directory checksum.");
+                cb.printLog("Downloading remote metadata ...");
+                remoteMetadata.fetch(cb);
+                cb.amendLastLog("Done");
+                cb.setProgress(0, 0);
+            }
+            // Now, either checksum or full metadata is fetched, with the encryption switch.
+
             localMetadata.loadHashCache();
             cb.printLog("Hash cache had " + localMetadata.hashCache.entries.size() + " files.");
             cb.printLog("Scanning local files ...");
-            localMetadata.scanDir();
+            localMetadata.scanDir(remoteMetadata.encrypt);
             cb.amendLastLog("Done");
             byte[] localChecksum = localMetadata.getDirChecksum();
             cb.printLog("Local directory checksum is " + Hex.encodeHexString(localChecksum));
@@ -38,28 +54,22 @@ public class Dispatcher {
             if (localMetadata.files.size() < 1) {
                 cb.printLog("The resource pack for the server is being downloaded.");
                 cb.printLog("This is going to take a while. Sit back and relax!");
-            } else {
-                if (source.hasDirHash) {
-                    cb.printLog("Downloading remote directory checksum ...");
-                    byte[] remoteChecksum = remoteMetadata.fetchDirChecksum(cb);
-                    cb.amendLastLog("Done");
-                    cb.printLog("Remote directory checksum is " + Hex.encodeHexString(remoteChecksum));
-                    if (Arrays.equals(localChecksum, remoteChecksum)) {
-                        cb.printLog("All files are up to date.");
-                        cb.setProgress(1, 1);
-                        cb.printLog("");
-                        cb.printLog("Done! Thank you.");
-                        return true;
-                    }
+            }
+            if (remoteChecksum != null) {
+                if (Arrays.equals(localChecksum, remoteChecksum)) {
+                    cb.printLog("All files are up to date.");
+                    cb.setProgress(1, 1);
+                    cb.printLog("");
+                    cb.printLog("Done! Thank you.");
+                    return true;
                 } else {
-                    cb.printLog("This server does not have a directory checksum.");
+                    // We haven't fetched the full metadata yet, do it now.
+                    cb.printLog("Downloading remote metadata ...");
+                    remoteMetadata.fetch(cb);
+                    cb.amendLastLog("Done");
+                    cb.setProgress(0, 0);
                 }
             }
-
-            cb.printLog("Downloading remote metadata ...");
-            remoteMetadata.fetch(cb);
-            cb.amendLastLog("Done");
-            cb.setProgress(0, 0);
 
             List<String> dirsToCreate = localMetadata.getDirsToCreate(remoteMetadata);
             List<String> dirsToDelete = localMetadata.getDirsToDelete(remoteMetadata);

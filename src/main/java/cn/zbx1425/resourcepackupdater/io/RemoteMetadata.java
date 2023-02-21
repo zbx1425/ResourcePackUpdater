@@ -22,6 +22,7 @@ import java.util.List;
 public class RemoteMetadata {
 
     public String baseUrl;
+    public boolean encrypt = false;
     public List<String> dirs = new ArrayList<>();
     public HashMap<String, byte[]> files = new HashMap<>();
 
@@ -34,6 +35,7 @@ public class RemoteMetadata {
         if (metaString.startsWith("{")) {
             JsonObject metadataObj = JsonParser.parseString(metaString).getAsJsonObject();
             assertMetadataVersion(metadataObj);
+            if (metadataObj.has("encrypt")) encrypt = metadataObj.get("encrypt").getAsBoolean();
             return Hex.decodeHex(metadataObj.get("sha1").getAsString());
         } else {
             return Hex.decodeHex(metaString.trim());
@@ -49,6 +51,7 @@ public class RemoteMetadata {
         assertMetadataVersion(metadataObj);
         int metadataVersion = 1;
         if (metadataObj.has("version")) metadataVersion = metadataObj.get("version").getAsInt();
+        if (metadataObj.has("encrypt")) encrypt = metadataObj.get("encrypt").getAsBoolean();
 
         if (metadataVersion == 1) {
             for (var entry : metadataObj.get("dirs").getAsJsonObject().entrySet()) {
@@ -88,7 +91,13 @@ public class RemoteMetadata {
             try {
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
                 urlToStream(url, baos, cb);
-                AssetEncryption.writeEncrypted(baos.toByteArray(), localPath.toFile());
+                if (encrypt) {
+                    AssetEncryption.writeEncrypted(baos.toByteArray(), localPath.toFile());
+                } else {
+                    try (BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(localPath.toFile()))) {
+                        bos.write(baos.toByteArray());
+                    }
+                }
                 byte[] expectedSha = files.get(file);
                 byte[] localSha = HashCache.getDigest(localPath.toFile());
                 if (!Arrays.equals(localSha, expectedSha)) {

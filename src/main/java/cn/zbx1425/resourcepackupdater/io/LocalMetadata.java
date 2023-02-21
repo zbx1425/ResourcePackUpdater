@@ -34,7 +34,7 @@ public class LocalMetadata {
         hashCache.load(Path.of(baseDir, HASH_CACHE_FILE_NAME));
     }
 
-    public void scanDir() throws Exception {
+    public void scanDir(boolean shouldEncrypt) throws Exception {
         dirs.clear();
         files.clear();
 
@@ -49,7 +49,7 @@ public class LocalMetadata {
                 if (Files.isDirectory(entry)) {
                     dirs.add(relPath);
                 } else {
-                    AssetEncryption.encryptIfRaw(entry.toFile());
+                    if (shouldEncrypt) AssetEncryption.encryptIfRaw(entry.toFile());
                     files.put(relPath, hashCache.getDigest(relPath, entry.toFile()));
                 }
             }

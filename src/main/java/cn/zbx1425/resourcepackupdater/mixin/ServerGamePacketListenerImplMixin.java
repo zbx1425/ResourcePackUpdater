@@ -1,7 +1,6 @@
 package cn.zbx1425.resourcepackupdater.mixin;
 
 import cn.zbx1425.resourcepackupdater.ResourcePackUpdater;
-import cn.zbx1425.resourcepackupdater.drm.ServerLockRegistry;
 import cn.zbx1425.resourcepackupdater.mappings.Text;
 import cn.zbx1425.resourcepackupdater.util.MismatchingVersionException;
 import cn.zbx1425.resourcepackupdater.util.RPUClientVersionSupplier;
