@@ -1,5 +1,7 @@
 package cn.zbx1425.resourcepackupdater.io;
 
+import cn.zbx1425.resourcepackupdater.drm.AssetEncryption;
+
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;

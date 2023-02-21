@@ -1,5 +1,6 @@
 package cn.zbx1425.resourcepackupdater.io;
 
+import cn.zbx1425.resourcepackupdater.drm.AssetEncryption;
 import com.google.gson.JsonParser;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.io.IOUtils;

@@ -1,5 +1,6 @@
 package cn.zbx1425.resourcepackupdater.io;
 
+import cn.zbx1425.resourcepackupdater.drm.AssetEncryption;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import org.apache.commons.io.IOUtils;

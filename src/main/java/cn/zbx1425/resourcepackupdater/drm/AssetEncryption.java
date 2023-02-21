@@ -1,6 +1,9 @@
-package cn.zbx1425.resourcepackupdater.io;
+package cn.zbx1425.resourcepackupdater.drm;
 
+import net.minecraft.client.Minecraft;
+import net.minecraft.core.UUIDUtil;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.ArrayUtils;
 
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
@@ -10,6 +13,7 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.Arrays;
+import java.util.UUID;
 
 public class AssetEncryption {
 
@@ -52,9 +56,10 @@ public class AssetEncryption {
         byte[] eContent, key;
         try {
             MessageDigest sha256 = MessageDigest.getInstance("SHA-256");
-            KeyGenerator keyGenerator = KeyGenerator.getInstance("AES");
-            keyGenerator.init(256);
-            key = keyGenerator.generateKey().getEncoded();
+            byte[] profileId = UUIDUtil.uuidToByteArray(Minecraft.getInstance().getUser().getGameProfile().getId());
+            byte[] randomId = UUIDUtil.uuidToByteArray(UUID.randomUUID());
+            key = ArrayUtils.addAll(profileId, randomId);
+
             SecretKeySpec aesKey = new SecretKeySpec(key, "AES");
             byte[] iv = Arrays.copyOfRange(sha256.digest(key), 0, 16);
             IvParameterSpec aesIv = new IvParameterSpec(iv);

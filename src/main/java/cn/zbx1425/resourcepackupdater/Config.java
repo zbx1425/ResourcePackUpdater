@@ -22,6 +22,8 @@ public class Config {
     public boolean pauseWhenSuccess;
     public File packBaseDirFile;
 
+    public String serverLockKey;
+
     public Config() {
         setDefaults();
     }
@@ -42,6 +44,11 @@ public class Config {
         }
         pauseWhenSuccess = obj.get("pauseWhenSuccess").getAsBoolean();
         packBaseDirFile = new File(getPackBaseDir());
+        if (obj.has("serverLockKey")) {
+            serverLockKey = obj.get("serverLockKey").getAsString();
+        } else {
+            serverLockKey = null;
+        }
     }
 
     public void save() throws IOException {
@@ -57,6 +64,9 @@ public class Config {
         }
         obj.add("sources", customSources);
         obj.addProperty("pauseWhenSuccess", pauseWhenSuccess);
+        if (serverLockKey != null) {
+            obj.addProperty("serverLockKey", serverLockKey);
+        }
         Files.writeString(getConfigFilePath(), new GsonBuilder().setPrettyPrinting().create().toJson(obj));
     }
 

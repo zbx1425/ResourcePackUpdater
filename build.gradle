@@ -1,15 +1,28 @@
+import groovy.json.JsonSlurper
+
 plugins {
     id 'fabric-loom' version '1.0-SNAPSHOT'
+    id "de.undercouch.download" version "4.1.2"
     id 'maven-publish'
 }
 
 version = project.mod_version
 group = project.maven_group
 
-def minecraft_version = "1.19.2"
+String default_minecraft_version = "1.16.5"
+String minecraft_version = rootProject.properties.containsKey("buildVersion") ? rootProject.getProperties().get("buildVersion") : default_minecraft_version
+int minecraft_main_version = minecraft_version.split("\\.")[1] as int
+String minecraft_version_int = minecraft_version.split("\\.")[0] +
+        minecraft_version.split("\\.")[1].padLeft(2, '0') +
+        (minecraft_version.split("\\.").length > 2 ? minecraft_version.split("\\.")[2].padLeft(2, '0') : "00")
+boolean is_1_19_3 = minecraft_version == "1.19.3"
+String parchment_version = is_1_19_3 ? "N/A" : new XmlSlurper().parse("https://ldtteam.jfrog.io/artifactory/parchmentmc-internal/org/parchmentmc/data/parchment-${minecraft_version}/maven-metadata.xml").versioning.release
 
-rootProject.ext.fabric_api_version = rootProject.fabric_version
-rootProject.ext.mod_menu_version = rootProject.mod_menu_version
+
+rootProject.ext.fabric_loader_version = new JsonSlurper().parse(("https://meta.fabricmc.net/v2/versions/loader/" + minecraft_version).toURL())[0]["loader"]["version"]
+rootProject.ext.forge_version = minecraft_version + "-" + new JsonSlurper().parse(("https://files.minecraftforge.net/net/minecraftforge/forge/promotions_slim.json").toURL())["promos"][minecraft_version + "-latest"]
+rootProject.ext.fabric_api_version = getModrinthVersion("fabric", minecraft_version, "fabric-api")
+rootProject.ext.mod_menu_version = getModrinthVersion("fabric", minecraft_version, "modmenu")
 
 repositories {
     // Add repositories to retrieve artifacts from in here.
@@ -32,7 +45,7 @@ dependencies {
     minecraft "com.mojang:minecraft:${minecraft_version}"
     mappings loom.layered() {
         officialMojangMappings()
-        parchment("org.parchmentmc.data:parchment-1.18.2:2022.09.04@zip")
+        parchment("org.parchmentmc.data:parchment-${minecraft_version}:${parchment_version}@zip")
     }
     modImplementation "net.fabricmc:fabric-loader:${project.fabric_loader_version}"
 
@@ -96,4 +109,20 @@ publishing {
         // The repositories here will be used for publishing your artifact, not for
         // retrieving dependencies.
     }
+}
+
+static def getModrinthVersion(loader, minecraftVersion, projectId) {
+    def versionsArray = new JsonSlurper().parse(("https://api.modrinth.com/v2/project/" + projectId + "/version").toURL())
+    for (def versionElement : versionsArray) {
+        if (versionElement["loaders"].contains(loader) && versionElement["game_versions"].contains(minecraftVersion)) {
+            return versionElement["version_number"]
+        }
+    }
+    return ""
+}
+
+static def getParchmentVersion(minecraftVersion) {
+    def url = "https://ldtteam.jfrog.io/artifactory/parchmentmc-internal/org/parchmentmc/data/parchment-" + minecraftVersion + "/maven-metadata.xml"
+    def data = new XmlParser().parse(url)
+    return data.versioning.latest.text()
 }

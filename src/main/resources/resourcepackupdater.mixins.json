@@ -3,8 +3,11 @@
   "minVersion": "0.8",
   "package": "cn.zbx1425.resourcepackupdater.mixin",
   "compatibilityLevel": "JAVA_8",
-  "mixins": [],
+  "mixins": [
+    "PlayerListMixin"
+  ],
   "client": [
+    "ClientboundCustomPayloadPacketMixin",
     "FolderPackResourcesMixin",
     "MinecraftMixin",
     "MultiPackResourceManagerMixin",

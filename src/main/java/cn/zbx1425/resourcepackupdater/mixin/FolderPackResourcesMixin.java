@@ -1,7 +1,8 @@
 package cn.zbx1425.resourcepackupdater.mixin;
 
 import cn.zbx1425.resourcepackupdater.ResourcePackUpdater;
-import cn.zbx1425.resourcepackupdater.io.AssetEncryption;
+import cn.zbx1425.resourcepackupdater.drm.AssetEncryption;
+import cn.zbx1425.resourcepackupdater.drm.ServerLockRegistry;
 import net.minecraft.server.packs.AbstractPackResources;
 import net.minecraft.server.packs.FolderPackResources;
 import net.minecraft.server.packs.ResourcePackFileNotFoundException;
@@ -31,8 +32,13 @@ public abstract class FolderPackResourcesMixin extends AbstractPackResources {
             if (file == null) {
                 throw new ResourcePackFileNotFoundException(this.file, resourcePath);
             }
-            FileInputStream fis = new FileInputStream(file);
-            cir.setReturnValue(AssetEncryption.wrapInputStream(fis));
+            ServerLockRegistry.FileLockInfo lockInfo = ServerLockRegistry.getServerLock(file);
+            if (lockInfo != null && lockInfo.isCurrentlyLocked()) {
+                cir.setReturnValue(lockInfo.getDummyInputStream());
+            } else {
+                FileInputStream fis = new FileInputStream(file);
+                cir.setReturnValue(AssetEncryption.wrapInputStream(fis));
+            }
             cir.cancel();
         }
     }
