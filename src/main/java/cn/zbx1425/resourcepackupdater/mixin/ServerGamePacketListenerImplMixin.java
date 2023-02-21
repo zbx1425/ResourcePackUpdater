@@ -35,12 +35,12 @@ public abstract class ServerGamePacketListenerImplMixin {
             if (clientVersion.equals(ResourcePackUpdater.MOD_VERSION) || !ResourcePackUpdater.CONFIG.clientEnforceSameVersion) {
                 ((RPUClientVersionSupplier)player).setRPUClientVersion(clientVersion);
             } else {
-                disconnect(Text.literal(new MismatchingVersionException(ResourcePackUpdater.MOD_VERSION, clientVersion).getMessage()));
+                disconnect(Text.literal(new MismatchingVersionException(ResourcePackUpdater.MOD_VERSION, clientVersion).getMessage().trim()));
             }
             ci.cancel();
         } else if (identifier.equals(ClientboundCustomPayloadPacket.BRAND)) {
             if (((RPUClientVersionSupplier)player).getRPUClientVersion() == null && ResourcePackUpdater.CONFIG.clientEnforceInstall) {
-                disconnect(Text.literal(new MismatchingVersionException(ResourcePackUpdater.MOD_VERSION, "N/A").getMessage()));
+                disconnect(Text.literal(new MismatchingVersionException(ResourcePackUpdater.MOD_VERSION, "N/A").getMessage().trim()));
                 ci.cancel();
             }
         }

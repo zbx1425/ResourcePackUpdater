@@ -30,7 +30,14 @@ public class RemoteMetadata {
     }
 
     public byte[] fetchDirChecksum(ProgressReceiver cb) throws Exception {
-        return Hex.decodeHex(httpGetString(baseUrl + "/metadata.sha1", cb));
+        String metaString = httpGetString(baseUrl + "/metadata.sha1", cb);
+        if (metaString.startsWith("{")) {
+            JsonObject metadataObj = JsonParser.parseString(metaString).getAsJsonObject();
+            assertMetadataVersion(metadataObj);
+            return Hex.decodeHex(metadataObj.get("sha1").getAsString());
+        } else {
+            return Hex.decodeHex(metaString.trim());
+        }
     }
 
     public void fetch(ProgressReceiver cb) throws Exception {
@@ -39,12 +46,7 @@ public class RemoteMetadata {
         var metadataObj = JsonParser.parseString(
                 httpGetString(baseUrl + "/metadata.json", cb)
         ).getAsJsonObject();
-        if (metadataObj.has("client_version")) {
-            String requestedVer = metadataObj.get("client_version").getAsString();
-            if (!requestedVer.equals(ResourcePackUpdater.MOD_VERSION)) {
-                throw new MismatchingVersionException(requestedVer, ResourcePackUpdater.MOD_VERSION);
-            }
-        }
+        assertMetadataVersion(metadataObj);
         int metadataVersion = 1;
         if (metadataObj.has("version")) metadataVersion = metadataObj.get("version").getAsInt();
 
@@ -134,5 +136,17 @@ public class RemoteMetadata {
             });
             IOUtils.copy(new BufferedInputStream(inputStream), pOfs);
         }
+    }
+
+    public void assertMetadataVersion(JsonObject metadataObj) throws MismatchingVersionException {
+        if (metadataObj.has("client_version")) {
+            String requestedVer = metadataObj.get("client_version").getAsString();
+            if (!requestedVer.equals(ResourcePackUpdater.MOD_VERSION)) {
+                throw new MismatchingVersionException(requestedVer, ResourcePackUpdater.MOD_VERSION);
+            }
+        }
+        int metadataVersion = 1;
+        if (metadataObj.has("version")) metadataVersion = metadataObj.get("version").getAsInt();
+        if (metadataVersion > 2) throw new MismatchingVersionException("Unsupported metadata protocol version: " + metadataVersion);
     }
 }

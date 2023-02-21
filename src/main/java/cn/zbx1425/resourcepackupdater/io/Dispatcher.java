@@ -36,7 +36,8 @@ public class Dispatcher {
             cb.printLog("Local directory checksum is " + Hex.encodeHexString(localChecksum));
 
             if (localMetadata.files.size() < 1) {
-                cb.printLog("This looks like a fresh install.");
+                cb.printLog("The resource pack for the server is being downloaded.");
+                cb.printLog("This is going to take a while. Sit back and relax!");
             } else {
                 if (source.hasDirHash) {
                     cb.printLog("Downloading remote directory checksum ...");

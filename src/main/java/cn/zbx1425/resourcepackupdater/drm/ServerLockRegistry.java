@@ -24,7 +24,11 @@ public class ServerLockRegistry {
 
     private static boolean serverLockPrefetched = false;
 
-    public static void prefetchServerLock(File rpFolder) {
+    public static void updateLocalServerLock(File rpFolder) {
+        if (lockAllSyncedPacks) {
+            localServerLock = null; // So that when no longer lockAllSyncedPacks, the pack will reload
+            return;
+        }
         try {
             JsonObject metaObj = JsonParser.parseString(IOUtils.toString(
                     AssetEncryption.wrapInputStream(new FileInputStream(rpFolder.toPath().resolve("pack.mcmeta").toFile()))
@@ -37,9 +41,11 @@ public class ServerLockRegistry {
                     ResourcePackUpdater.LOGGER.info("Server lock info prefetched from local pack.");
                     serverLockPrefetched = true;
                 }
+            } else {
+                localServerLock = null;
             }
         } catch (Exception ignored) {
-
+            localServerLock = null;
         }
     }
 
@@ -67,13 +73,13 @@ public class ServerLockRegistry {
 
     public static void onAfterSetServerLock() {
         if (remoteServerLock == null) {
-            ResourcePackUpdater.LOGGER.info("Server didn't claim to be applicable for synced resource pack.");
+            ResourcePackUpdater.LOGGER.info("Asset coordination identifier not received.");
         } else if (!remoteServerLock.equals(localServerLock)) {
-            ResourcePackUpdater.LOGGER.info("Server claims to be using a different synced resource pack.");
+            ResourcePackUpdater.LOGGER.info("Asset coordination identifier differs.");
         } else if (lockAllSyncedPacks) {
-            ResourcePackUpdater.LOGGER.info("Synced pack not applied due to unsuccessful download.");
+            ResourcePackUpdater.LOGGER.info("Asset coordination is unavailable due to incomplete synchronization.");
         } else {
-            ResourcePackUpdater.LOGGER.info("Synced pack is applicable to this server.");
+            ResourcePackUpdater.LOGGER.info("Asset coordination is applicable.");
         }
         if (!Objects.equals(packAppliedServerLock, remoteServerLock)) {
             packAppliedServerLock = remoteServerLock;

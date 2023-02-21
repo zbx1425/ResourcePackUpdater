@@ -49,7 +49,6 @@ public class ResourcePackUpdater implements ModInitializer {
         try {
             boolean syncSuccess = syncDispatcher.runSync(ResourcePackUpdater.CONFIG.getPackBaseDir(), ResourcePackUpdater.CONFIG.activeSource, ResourcePackUpdater.GL_PROGRESS_SCREEN);
             if (syncSuccess) {
-                ServerLockRegistry.prefetchServerLock(ResourcePackUpdater.CONFIG.packBaseDirFile);
                 ServerLockRegistry.lockAllSyncedPacks = false;
             } else {
                 ServerLockRegistry.lockAllSyncedPacks = true;
@@ -65,6 +64,7 @@ public class ResourcePackUpdater implements ModInitializer {
         } catch (Exception ignored) {
             ServerLockRegistry.lockAllSyncedPacks = true;
         }
+        ServerLockRegistry.updateLocalServerLock(ResourcePackUpdater.CONFIG.packBaseDirFile);
         GlHelper.resetGlStates();
     }
 
