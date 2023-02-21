@@ -22,7 +22,6 @@ public class ServerLockRegistry {
     private static String remoteServerLock;
     private static String packAppliedServerLock;
 
-    private static long serverLockPacketTime;
     private static boolean serverLockPrefetched = false;
 
     public static void prefetchServerLock(File rpFolder) {
@@ -50,10 +49,13 @@ public class ServerLockRegistry {
         return !Objects.equals(localServerLock, remoteServerLock);
     }
 
+    public static void onLoginInitiated() {
+        remoteServerLock = null;
+    }
+
     public static void onSetServerLock(String serverLock) {
         ResourcePackUpdater.LOGGER.info("Server lock info obtained from remote.");
         remoteServerLock = serverLock;
-        serverLockPacketTime = System.currentTimeMillis();
         if (lockAllSyncedPacks) {
             Minecraft.getInstance().getToasts().addToast(new SystemToast(SystemToast.SystemToastIds.PACK_LOAD_FAILURE,
                 Text.literal("伺服器資源包不完整而未被采用"), Text.literal("您可按 F3+T 重試下載。如有錯誤請聯絡管理人員。")
@@ -66,14 +68,6 @@ public class ServerLockRegistry {
 
     public static void onAfterSetServerLock() {
         if (Minecraft.getInstance().isSameThread()) return;
-        if (System.currentTimeMillis() - serverLockPacketTime > 10 * 1000) {
-            // Server lock packet not sent in the past 10s, meaning the remote server doesn't have mod installed.
-            ResourcePackUpdater.LOGGER.info("Server lock info not present at remote.");
-            remoteServerLock = null;
-            serverLockPacketTime = 0;
-        } else {
-            ResourcePackUpdater.LOGGER.info("Server lock info is valid.");
-        }
         if (!Objects.equals(packAppliedServerLock, remoteServerLock)) {
             packAppliedServerLock = remoteServerLock;
             Minecraft.getInstance().execute(() -> Minecraft.getInstance().reloadResourcePacks());

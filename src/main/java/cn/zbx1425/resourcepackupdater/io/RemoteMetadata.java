@@ -2,6 +2,7 @@ package cn.zbx1425.resourcepackupdater.io;
 
 import cn.zbx1425.resourcepackupdater.ResourcePackUpdater;
 import cn.zbx1425.resourcepackupdater.drm.AssetEncryption;
+import cn.zbx1425.resourcepackupdater.util.MismatchingVersionException;
 import com.google.gson.JsonParser;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.io.IOUtils;
@@ -40,10 +41,7 @@ public class RemoteMetadata {
         if (metadataObj.has("client_version")) {
             String requestedVer = metadataObj.get("client_version").getAsString();
             if (!requestedVer.equals(ResourcePackUpdater.MOD_VERSION)) {
-                throw new Exception("\n" +
-                    String.format("資源同步實用程式版本不合: 請您去下載安裝 %s 版 (您現有 %s)", requestedVer, ResourcePackUpdater.MOD_VERSION) + "\n" +
-                    String.format("Please update your Resource Pack Updater mod to the version %s (You are now using %s)", requestedVer, ResourcePackUpdater.MOD_VERSION)
-                );
+                throw new MismatchingVersionException(requestedVer, ResourcePackUpdater.MOD_VERSION);
             }
         }
         for (var entry : metadataObj.get("dirs").getAsJsonObject().entrySet()) {

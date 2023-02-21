@@ -23,6 +23,8 @@ public class Config {
     public File packBaseDirFile;
 
     public String serverLockKey;
+    public Boolean clientEnforceInstall;
+    public Boolean clientEnforceSameVersion;
 
     public Config() {
         setDefaults();
@@ -49,6 +51,8 @@ public class Config {
         } else {
             serverLockKey = null;
         }
+        clientEnforceInstall = obj.has("clientEnforceInstall") ? obj.get("clientEnforceInstall").getAsBoolean() : null;
+        clientEnforceSameVersion = obj.has("clientEnforceSameVersion") ? obj.get("clientEnforceSameVersion").getAsBoolean() : null;
     }
 
     public void save() throws IOException {
@@ -64,9 +68,9 @@ public class Config {
         }
         obj.add("sources", customSources);
         obj.addProperty("pauseWhenSuccess", pauseWhenSuccess);
-        if (serverLockKey != null) {
-            obj.addProperty("serverLockKey", serverLockKey);
-        }
+        if (serverLockKey != null) obj.addProperty("serverLockKey", serverLockKey);
+        if (clientEnforceInstall != null) obj.addProperty("clientEnforceInstall", clientEnforceInstall);
+        if (clientEnforceSameVersion != null) obj.addProperty("clientEnforceSameVersion", clientEnforceSameVersion);
         Files.writeString(getConfigFilePath(), new GsonBuilder().setPrettyPrinting().create().toJson(obj));
     }
 
@@ -76,6 +80,10 @@ public class Config {
         localPackName = "SyncedPack";
         disableBuiltinSources = false;
         pauseWhenSuccess = false;
+        packBaseDirFile = new File(getPackBaseDir());
+        serverLockKey = null;
+        clientEnforceInstall = null;
+        clientEnforceSameVersion = null;
     }
 
     private void addBuiltinSources() {
@@ -84,10 +92,12 @@ public class Config {
             "MTR Let's Play (HK, Primary)",
            "https://mc.zbx1425.cn/jlp-srp", true, true, true
         ));
+        /*
         sourceList.add(new SourceProperty(
             "MTR Let's Play (CN, Mirror)",
         "https://seu.complexstudio.net/jlp-srp", true, false, true
         ));
+        */
     }
 
     public String getPackBaseDir() {
