@@ -12,7 +12,7 @@
   },
   "license": "MIT",
   "icon": "icon.png",
-  "environment": "client",
+  "environment": "*",
   "entrypoints": {
     "main": [
       "cn.zbx1425.resourcepackupdater.ResourcePackUpdater"
