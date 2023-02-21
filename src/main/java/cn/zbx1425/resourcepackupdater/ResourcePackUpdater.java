@@ -5,8 +5,6 @@ import cn.zbx1425.resourcepackupdater.gui.GlHelper;
 import cn.zbx1425.resourcepackupdater.gui.GlProgressScreen;
 import cn.zbx1425.resourcepackupdater.io.Dispatcher;
 import net.fabricmc.api.ModInitializer;
-import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
-import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Options;
@@ -80,6 +78,11 @@ public class ResourcePackUpdater implements ModInitializer {
         if (!options.resourcePacks.contains("Fabric Mods")) {
             options.resourcePacks.add("Fabric Mods");
         }
+        /*
+        if (!ServerLockRegistry.shouldRefuseProvidingFile(null)) {
+            options.resourcePacks.add(expectedEntry);
+        }
+        */
         options.resourcePacks.add(expectedEntry);
         options.incompatibleResourcePacks.remove(expectedEntry);
 

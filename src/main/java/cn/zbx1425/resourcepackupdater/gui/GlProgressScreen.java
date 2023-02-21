@@ -117,9 +117,9 @@ public class GlProgressScreen implements ProgressReceiver {
         if (exception == null) {
             GlHelper.drawString(20, 60, window.getWidth() - 40, LINE_HEIGHT * 2, FONT_SIZE,
                     String.format("%3d%%\n%3d%%\n", Math.round(primaryProgress * 100), Math.round(secondaryProgress * 100)),
-                    0xFFFFFFFF, true, true);
+                    0xffdddddd, true, true);
             if (paused) {
-                GlHelper.drawString(window.getWidth() - 144 - 20, 20, 144, 16, 16, "Scroll AVAIL", 0xFFFFFFFF, false, true);
+                GlHelper.drawString(window.getWidth() - 144 - 20, 20, 144, 16, 16, "Scroll AVAIL", 0xffdddddd, false, true);
                 int backColor = System.currentTimeMillis() % 400 >= 200 ? 0xFF008800 : 0xFF000000;
                 GlHelper.blit(0, 60 + LINE_HEIGHT * 2, window.getWidth(), LINE_HEIGHT, backColor);
                 int color = System.currentTimeMillis() % 400 < 200 ? 0xFFFF0000 : 0xFFFFFF00;
@@ -127,20 +127,20 @@ public class GlProgressScreen implements ProgressReceiver {
                         "Press ENTER to proceed.",
                         color, false, true);
             } else {
-                GlHelper.drawString(window.getWidth() - 144 - 20, 20, 144, 16, 16, "Cancel: ESC", 0xFFFFFFFF, false, true);
+                GlHelper.drawString(window.getWidth() - 144 - 20, 20, 144, 16, 16, "Cancel: ESC", 0xffdddddd, false, true);
                 boolean monospace = primaryInfo.length() > 0 && primaryInfo.charAt(0)== ':';
                 GlHelper.drawString(20, 60 + LINE_HEIGHT * 2, window.getWidth() - 40, LINE_HEIGHT, FONT_SIZE,
                         primaryInfo,
-                        0xFFFFFFFF, monospace, true);
+                        0xffdddddd, monospace, true);
             }
             float barBegin = 20 + FONT_SIZE * 2 + 20;
             float usableBarWidth = window.getWidth() - barBegin - 50;
-            GlHelper.blit(barBegin, 60 + 3, window.getWidth() - barBegin - 40, LINE_HEIGHT - 6, 0xFFDDDDDD);
+            GlHelper.blit(barBegin, 60 + 3, window.getWidth() - barBegin - 40, LINE_HEIGHT - 6, 0xFF666666);
             GlHelper.blit(barBegin + 3, 60 + 6, window.getWidth() - barBegin - 46, LINE_HEIGHT - 12, 0xFF222222);
-            GlHelper.blit(barBegin + 5, 60 + 8, usableBarWidth * primaryProgress, LINE_HEIGHT - 16, 0xFFFFFF00);
-            GlHelper.blit(barBegin, 60 + LINE_HEIGHT + 3, window.getWidth() - barBegin - 40, LINE_HEIGHT - 6, 0xFFDDDDDD);
+            GlHelper.blit(barBegin + 5, 60 + 8, usableBarWidth * primaryProgress, LINE_HEIGHT - 16, 0xff9722ff);
+            GlHelper.blit(barBegin, 60 + LINE_HEIGHT + 3, window.getWidth() - barBegin - 40, LINE_HEIGHT - 6, 0xFF666666);
             GlHelper.blit(barBegin + 3, 60 + LINE_HEIGHT + 6, window.getWidth() - barBegin - 46, LINE_HEIGHT - 12, 0xFF222222);
-            GlHelper.blit(barBegin + 5, 60 + LINE_HEIGHT + 8, usableBarWidth * secondaryProgress, LINE_HEIGHT - 16, 0xFF00FFFF);
+            GlHelper.blit(barBegin + 5, 60 + LINE_HEIGHT + 8, usableBarWidth * secondaryProgress, LINE_HEIGHT - 16, 0xff27a2fd);
 
             final int LOG_FONT_SIZE = 16;
             final int LOG_LINE_HEIGHT = 20;
@@ -155,7 +155,7 @@ public class GlProgressScreen implements ProgressReceiver {
                     "There was an error!",
                     0xFFFF0000, false, true);
             if (paused) {
-                GlHelper.drawString(window.getWidth() - 144 - 20, 20, 144, 16, 16, "Scroll AVAIL", 0xFFFFFFFF, false, true);
+                GlHelper.drawString(window.getWidth() - 144 - 20, 20, 144, 16, 16, "Scroll AVAIL", 0xffdddddd, false, true);
                 int backColor = System.currentTimeMillis() % 400 >= 200 ? 0xFF880000 : 0xFF000000;
                 GlHelper.blit(0, 60 + LINE_HEIGHT, window.getWidth(), LINE_HEIGHT, backColor);
                 int color = System.currentTimeMillis() % 400 < 200 ? 0xFFFF0000 : 0xFFFFFF00;
@@ -165,7 +165,7 @@ public class GlProgressScreen implements ProgressReceiver {
             } else {
                 GlHelper.drawString(20, 60 + LINE_HEIGHT, window.getWidth() - 40, LINE_HEIGHT, FONT_SIZE,
                         primaryInfo,
-                        0xFFFFFFFF, true, true);
+                        0xffdddddd, true, true);
             }
             final int LOG_FONT_SIZE = 16;
             GlHelper.drawString(20, 60 + LINE_HEIGHT * 2 + 10, window.getWidth() - 40,  window.getHeight() - 100 - 10, LOG_FONT_SIZE,
@@ -178,7 +178,7 @@ public class GlProgressScreen implements ProgressReceiver {
         // GlHelper.drawString(20, 20, window.getWidth() - 40, LINE_HEIGHT, LINE_HEIGHT,
         //        "Resource Pack Updater © Zbx1425", 0xFFFFFF00, false, true);
         RenderSystem.setShaderTexture(0, GlHelper.PRELOAD_HEADER_TEXTURE);
-        GlHelper.blit(20, 20, 512, 32, 0, 0, 1, 1, 0xFFFFFFFF);
+        GlHelper.blit(20, 20, 512, 32, 0, 0, 1, 1, 0xffdddddd);
         GlHelper.end();
 
         if (swap) {

@@ -3,6 +3,7 @@ package cn.zbx1425.resourcepackupdater.io;
 import cn.zbx1425.resourcepackupdater.ResourcePackUpdater;
 import cn.zbx1425.resourcepackupdater.drm.AssetEncryption;
 import cn.zbx1425.resourcepackupdater.util.MismatchingVersionException;
+import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.io.IOUtils;
@@ -44,11 +45,26 @@ public class RemoteMetadata {
                 throw new MismatchingVersionException(requestedVer, ResourcePackUpdater.MOD_VERSION);
             }
         }
-        for (var entry : metadataObj.get("dirs").getAsJsonObject().entrySet()) {
-            dirs.add(entry.getKey());
-        }
-        for (var entry : metadataObj.get("files").getAsJsonObject().entrySet()) {
-            files.put(entry.getKey(), Hex.decodeHex(entry.getValue().getAsJsonObject().get("sha1").getAsString()));
+        int metadataVersion = 1;
+        if (metadataObj.has("version")) metadataVersion = metadataObj.get("version").getAsInt();
+
+        if (metadataVersion == 1) {
+            for (var entry : metadataObj.get("dirs").getAsJsonObject().entrySet()) {
+                dirs.add(entry.getKey());
+            }
+            for (var entry : metadataObj.get("files").getAsJsonObject().entrySet()) {
+                files.put(entry.getKey(), Hex.decodeHex(entry.getValue().getAsJsonObject().get("sha1").getAsString()));
+            }
+        } else if (metadataVersion == 2) {
+            JsonObject contentObj = metadataObj.get("file_content").getAsJsonObject();
+            for (var entry : contentObj.get("dirs").getAsJsonObject().entrySet()) {
+                dirs.add(entry.getKey());
+            }
+            for (var entry : contentObj.get("files").getAsJsonObject().entrySet()) {
+                files.put(entry.getKey(), Hex.decodeHex(entry.getValue().getAsJsonObject().get("sha1").getAsString()));
+            }
+        } else {
+            throw new MismatchingVersionException("Unsupported metadata protocol version: " + metadataVersion);
         }
     }
 
@@ -117,31 +133,6 @@ public class RemoteMetadata {
                 }
             });
             IOUtils.copy(new BufferedInputStream(inputStream), pOfs);
-        }
-    }
-
-    public void httpGetZippedPackage(Path localPath, ProgressReceiver cb) throws Exception {
-        byte[] expectedSha = Hex.decodeHex(httpGetString(baseUrl + "/pack.zip.sha1", cb));
-
-        if (Files.isRegularFile(localPath)) {
-            byte[] localSha = HashCache.getDigest(localPath.toFile());
-            if (!Arrays.equals(localSha, expectedSha)) {
-                Files.deleteIfExists(localPath);
-            } else {
-                return;
-            }
-        } else {
-            Files.deleteIfExists(localPath);
-        }
-
-        URL url = new URL(baseUrl + "/pack.zip");
-        try (FileOutputStream fos = new FileOutputStream(localPath.toFile())) {
-            urlToStream(url, fos, cb);
-            byte[] localSha = HashCache.getDigest(localPath.toFile());
-            if (!Arrays.equals(localSha, expectedSha)) {
-                throw new IOException("SHA1 mismatch: " + Hex.encodeHexString(localSha) + "downloaded, " +
-                        Hex.encodeHexString(expectedSha) + " expected");
-            }
         }
     }
 }

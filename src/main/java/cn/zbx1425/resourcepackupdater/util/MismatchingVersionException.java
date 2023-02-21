@@ -10,4 +10,8 @@ public class MismatchingVersionException extends Exception {
             String.format("Please update your Resource Pack Updater mod to the version %s (You are now using %s)", requested, current)
         );
     }
+
+    public MismatchingVersionException(String message) {
+        super(message);
+    }
 }

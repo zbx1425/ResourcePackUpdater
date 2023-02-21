@@ -80,7 +80,7 @@ public class ConfigScreen extends Screen {
             }
             GlHelper.resetGlStates();
         } else {
-            this.fillGradient(matrices, 0, 0, this.width, this.height, 0xFF03458C, 0xFF001A3B);
+            this.fillGradient(matrices, 0, 0, this.width, this.height, 0xff014e7c, 0xff02142a);
             RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
             RenderSystem.setShaderTexture(0, GlHelper.PRELOAD_HEADER_TEXTURE);
             blit(matrices, 10, 10, 256, 16, 0, 0, 512, 32, 512, 32);

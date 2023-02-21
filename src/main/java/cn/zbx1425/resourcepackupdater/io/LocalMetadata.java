@@ -101,45 +101,4 @@ public class LocalMetadata {
     public List<String> getFilesToDelete(RemoteMetadata other) {
         return files.keySet().stream().filter(file -> !other.files.containsKey(file)).toList();
     }
-
-    public static void unzipFileTo(String src, File destDir, ProgressReceiver cb) throws Exception {
-        ZipFile zipFile = new ZipFile(src);
-        Enumeration<? extends ZipEntry> zipEntries = zipFile.entries();
-        int processed = 0;
-        while (zipEntries.hasMoreElements()) {
-            ZipEntry zipEntry = zipEntries.nextElement();
-            File newFile = new File(destDir, zipEntry.getName());
-            String destDirPath = destDir.getCanonicalPath();
-            String destFilePath = newFile.getCanonicalPath();
-
-            if (!destFilePath.startsWith(destDirPath + File.separator)) {
-                throw new IOException("Entry is outside of the target dir: " + zipEntry.getName());
-            }
-
-            if (zipEntry.isDirectory()) {
-                if (!newFile.isDirectory() && !newFile.mkdirs()) {
-                    throw new IOException("Failed to create directory " + newFile);
-                }
-            } else {
-                File parent = newFile.getParentFile();
-                if (!parent.isDirectory() && !parent.mkdirs()) {
-                    throw new IOException("Failed to create directory " + parent);
-                }
-
-                InputStream zis = zipFile.getInputStream(zipEntry);
-                FileOutputStream fos = new FileOutputStream(newFile);
-                BufferedOutputStream bos = new BufferedOutputStream(fos);
-                IOUtils.copy(zis, bos);
-                bos.close();
-                fos.close();
-                zis.close();
-            }
-            cb.setSecondaryProgress(
-                    processed * 1f / zipFile.size(),
-                    String.format(": %5d / %5d entries decompressed", processed, zipFile.size())
-            );
-            processed++;
-        }
-        zipFile.close();
-    }
 }

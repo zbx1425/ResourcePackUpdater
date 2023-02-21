@@ -79,12 +79,10 @@ public class GlHelper {
     }
 
     public static void drawBlueGradientBackground() {
-        final int colorTop = 0xFF03458C;
-        final int colorBottom = 0xFF001A3B;
-        bufferBuilder.vertex(-1, 1, 1f).uv(118f/256f, 8f/256f).color(colorTop).endVertex();
-        bufferBuilder.vertex(1, 1, 1f).uv(118f/256f, 8f/256f).color(colorTop).endVertex();
-        bufferBuilder.vertex(1, -1, 1f).uv(118f/256f, 8f/256f).color(colorBottom).endVertex();
-        bufferBuilder.vertex(-1, -1, 1f).uv(118f/256f, 8f/256f).color(colorBottom).endVertex();
+        bufferBuilder.vertex(-1, 1, 1f).uv(118f/256f, 8f/256f).color(0xff014e7c).endVertex();
+        bufferBuilder.vertex(1, 1, 1f).uv(118f/256f, 8f/256f).color(0xff0d1033).endVertex();
+        bufferBuilder.vertex(1, -1, 1f).uv(118f/256f, 8f/256f).color(0xff501639).endVertex();
+        bufferBuilder.vertex(-1, -1, 1f).uv(118f/256f, 8f/256f).color(0xff02142a).endVertex();
     }
 
     public static void blit(float x1, float y1, float width, float height, float u1, float v1, float u2, float v2, int color) {

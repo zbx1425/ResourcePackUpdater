@@ -54,7 +54,6 @@ public class ServerLockRegistry {
     }
 
     public static void onSetServerLock(String serverLock) {
-        ResourcePackUpdater.LOGGER.info("Server lock info obtained from remote.");
         remoteServerLock = serverLock;
         if (lockAllSyncedPacks) {
             Minecraft.getInstance().getToasts().addToast(new SystemToast(SystemToast.SystemToastIds.PACK_LOAD_FAILURE,
@@ -67,7 +66,15 @@ public class ServerLockRegistry {
     }
 
     public static void onAfterSetServerLock() {
-        if (Minecraft.getInstance().isSameThread()) return;
+        if (remoteServerLock == null) {
+            ResourcePackUpdater.LOGGER.info("Server didn't claim to be applicable for synced resource pack.");
+        } else if (!remoteServerLock.equals(localServerLock)) {
+            ResourcePackUpdater.LOGGER.info("Server claims to be using a different synced resource pack.");
+        } else if (lockAllSyncedPacks) {
+            ResourcePackUpdater.LOGGER.info("Synced pack not applied due to unsuccessful download.");
+        } else {
+            ResourcePackUpdater.LOGGER.info("Synced pack is applicable to this server.");
+        }
         if (!Objects.equals(packAppliedServerLock, remoteServerLock)) {
             packAppliedServerLock = remoteServerLock;
             Minecraft.getInstance().execute(() -> Minecraft.getInstance().reloadResourcePacks());
