@@ -27,9 +27,9 @@ public class Dispatcher {
             localMetadata = new LocalMetadata(baseDir);
             remoteMetadata = new RemoteMetadata(source.baseUrl);
 
-            cb.printLog("Scanning local files ...");
             localMetadata.loadHashCache();
             cb.printLog("Hash cache had " + localMetadata.hashCache.entries.size() + " files.");
+            cb.printLog("Scanning local files ...");
             localMetadata.scanDir();
             cb.amendLastLog("Done");
             byte[] localChecksum = localMetadata.getDirChecksum();
