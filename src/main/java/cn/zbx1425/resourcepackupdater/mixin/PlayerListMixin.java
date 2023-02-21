@@ -22,7 +22,7 @@ public class PlayerListMixin {
             if (ResourcePackUpdater.CONFIG.serverLockKey != null) {
                 FriendlyByteBuf friendlyByteBuf = new FriendlyByteBuf(Unpooled.buffer());
                 friendlyByteBuf.writeUtf(ResourcePackUpdater.CONFIG.serverLockKey);
-                instance.send(new ClientboundCustomPayloadPacket(ServerLockRegistry.SERVER_LOCK_PACKET_ID, friendlyByteBuf));
+                instance.send(new ClientboundCustomPayloadPacket(ResourcePackUpdater.SERVER_LOCK_PACKET_ID, friendlyByteBuf));
             }
         }
         instance.send(packet);

@@ -8,6 +8,7 @@ import net.fabricmc.api.ModInitializer;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Options;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.repository.PackRepository;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -26,6 +27,9 @@ public class ResourcePackUpdater implements ModInitializer {
 
     public static final Config CONFIG = new Config();
 
+    public static final ResourceLocation SERVER_LOCK_PACKET_ID = new ResourceLocation("zbx_rpu", "server_lock");
+
+
     @Override
     public void onInitialize() {
         MOD_VERSION = FabricLoader.getInstance().getModContainer(MOD_ID).get()
@@ -43,8 +47,13 @@ public class ResourcePackUpdater implements ModInitializer {
         Dispatcher syncDispatcher = new Dispatcher();
         ResourcePackUpdater.GL_PROGRESS_SCREEN.reset();
         try {
-            syncDispatcher.runSync(ResourcePackUpdater.CONFIG.getPackBaseDir(), ResourcePackUpdater.CONFIG.activeSource, ResourcePackUpdater.GL_PROGRESS_SCREEN);
-            ServerLockRegistry.prefetchServerLock(ResourcePackUpdater.CONFIG.packBaseDirFile);
+            boolean syncSuccess = syncDispatcher.runSync(ResourcePackUpdater.CONFIG.getPackBaseDir(), ResourcePackUpdater.CONFIG.activeSource, ResourcePackUpdater.GL_PROGRESS_SCREEN);
+            if (syncSuccess) {
+                ServerLockRegistry.prefetchServerLock(ResourcePackUpdater.CONFIG.packBaseDirFile);
+                ServerLockRegistry.lockAllSyncedPacks = false;
+            } else {
+                ServerLockRegistry.lockAllSyncedPacks = true;
+            }
 
             if (ResourcePackUpdater.CONFIG.pauseWhenSuccess || ResourcePackUpdater.GL_PROGRESS_SCREEN.hasException()) {
                 while (ResourcePackUpdater.GL_PROGRESS_SCREEN.pause(true)) {
@@ -54,7 +63,7 @@ public class ResourcePackUpdater implements ModInitializer {
 
             Minecraft.getInstance().options.save();
         } catch (Exception ignored) {
-
+            ServerLockRegistry.lockAllSyncedPacks = true;
         }
         GlHelper.resetGlStates();
     }

@@ -35,7 +35,7 @@ public abstract class FolderPackResourcesMixin extends AbstractPackResources {
     void getResource(String resourcePath, CallbackInfoReturnable<InputStream> cir) throws IOException {
         if (file.equals(ResourcePackUpdater.CONFIG.packBaseDirFile)) {
             File file = this.getFile(resourcePath);
-            if (file == null || ServerLockRegistry.isPackLocked(this.file, resourcePath)) {
+            if (file == null || ServerLockRegistry.shouldRefuseProvidingFile(resourcePath)) {
                 throw new ResourcePackFileNotFoundException(this.file, resourcePath);
             }
             FileInputStream fis = new FileInputStream(file);
@@ -47,7 +47,7 @@ public abstract class FolderPackResourcesMixin extends AbstractPackResources {
     @Inject(method = "hasResource", at = @At("HEAD"), cancellable = true)
     void hasResource(String resourcePath, CallbackInfoReturnable<Boolean> cir) {
         if (file.equals(ResourcePackUpdater.CONFIG.packBaseDirFile)) {
-            if (ServerLockRegistry.isPackLocked(this.file, resourcePath)) {
+            if (ServerLockRegistry.shouldRefuseProvidingFile(resourcePath)) {
                 cir.setReturnValue(false); cir.cancel();
             }
         }
@@ -55,7 +55,7 @@ public abstract class FolderPackResourcesMixin extends AbstractPackResources {
     @Inject(method = "getResources", at = @At("HEAD"), cancellable = true)
     void getResources(PackType type, String namespace, String path, Predicate<ResourceLocation> filter, CallbackInfoReturnable<Collection<ResourceLocation>> cir) {
         if (file.equals(ResourcePackUpdater.CONFIG.packBaseDirFile)) {
-            if (ServerLockRegistry.isPackLocked(this.file, null)) {
+            if (ServerLockRegistry.shouldRefuseProvidingFile(null)) {
                 cir.setReturnValue(Collections.emptyList()); cir.cancel();
             }
         }
@@ -63,7 +63,7 @@ public abstract class FolderPackResourcesMixin extends AbstractPackResources {
     @Inject(method = "getNamespaces", at = @At("HEAD"), cancellable = true)
     void getNamespaces(PackType type, CallbackInfoReturnable<Set<String>> cir) {
         if (file.equals(ResourcePackUpdater.CONFIG.packBaseDirFile)) {
-            if (ServerLockRegistry.isPackLocked(this.file, null)) {
+            if (ServerLockRegistry.shouldRefuseProvidingFile(null)) {
                 cir.setReturnValue(Collections.emptySet()); cir.cancel();
             }
         }

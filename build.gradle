@@ -1,4 +1,5 @@
 import groovy.json.JsonSlurper
+import org.apache.tools.ant.filters.ReplaceTokens
 
 plugins {
     id 'fabric-loom' version '1.0-SNAPSHOT'
@@ -74,6 +75,31 @@ tasks.withType(JavaCompile).configureEach {
     if (targetJavaVersion >= 10 || JavaVersion.current().isJava10Compatible()) {
         it.options.release = targetJavaVersion
     }
+}
+
+
+task setupFiles() {
+    download {
+        src "https://github.com/jonafanho/Minecraft-Mappings/archive/refs/heads/1.${minecraft_main_version}${is_1_19_3 ? ".3" : ""}.zip"
+        dest "src/main/java/cn/zbx1425/resourcepackupdater/mappings/files.zip"
+        overwrite true
+    }
+
+    copy {
+        outputs.upToDateWhen { false }
+        from (zipTree("src/main/java/cn/zbx1425/resourcepackupdater/mappings/files.zip").matching {
+                include "**/Text.java"
+            }){ eachFile { file -> file.relativePath = new RelativePath(true, file.relativePath.segments.drop(1) as String[]) } }
+        into "src/main/java/cn/zbx1425/resourcepackupdater/mappings"
+        filter(ReplaceTokens, tokens: ["package": "cn.zbx1425.resourcepackupdater.mappings"])
+    }
+
+    ant.delete(file: "src/main/java/cn/zbx1425/resourcepackupdater/mappings/files.zip")
+    ant.delete(dir: "src/main/java/cn/zbx1425/resourcepackupdater/mappings/Minecraft-Mappings-1.${minecraft_main_version}${is_1_19_3 ? ".3" : ""}")
+}
+
+afterEvaluate {
+    rootProject.tasks.build.dependsOn rootProject.tasks.setupFiles
 }
 
 java {
