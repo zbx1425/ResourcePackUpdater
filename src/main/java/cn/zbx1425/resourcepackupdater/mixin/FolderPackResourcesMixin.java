@@ -32,7 +32,7 @@ public abstract class FolderPackResourcesMixin extends AbstractPackResources {
             if (file == null) {
                 throw new ResourcePackFileNotFoundException(this.file, resourcePath);
             }
-            ServerLockRegistry.FileLockInfo lockInfo = ServerLockRegistry.getServerLock(file);
+            ServerLockRegistry.FileLockInfo lockInfo = ServerLockRegistry.getServerLock(file, this.file);
             if (lockInfo != null && lockInfo.isCurrentlyLocked()) {
                 cir.setReturnValue(lockInfo.getDummyInputStream());
             } else {

@@ -21,10 +21,10 @@ public class ClientboundCustomPayloadPacketMixin {
     @Inject(method = "handle(Lnet/minecraft/network/protocol/game/ClientGamePacketListener;)V", at = @At("HEAD"), cancellable = true)
     void handle(ClientGamePacketListener handler, CallbackInfo ci) {
         if (identifier.equals(ServerLockRegistry.SERVER_LOCK_PACKET_ID)) {
-            ServerLockRegistry.currentServerLock = data.readUtf();
+            ServerLockRegistry.onSetServerLock(data.readUtf());
             ci.cancel();
         } else if (identifier.equals(ClientboundCustomPayloadPacket.BRAND)) {
-            ServerLockRegistry.currentServerLock = null;
+            ServerLockRegistry.onAfterSetServerLock();
         }
     }
 }

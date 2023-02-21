@@ -3,8 +3,8 @@ package cn.zbx1425.resourcepackupdater;
 import cn.zbx1425.resourcepackupdater.gui.GlHelper;
 import cn.zbx1425.resourcepackupdater.gui.GlProgressScreen;
 import cn.zbx1425.resourcepackupdater.io.Dispatcher;
+import net.fabricmc.api.ModInitializer;
 import net.fabricmc.loader.api.FabricLoader;
-import net.fabricmc.loader.api.entrypoint.PreLaunchEntrypoint;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Options;
 import net.minecraft.server.packs.repository.PackRepository;
@@ -13,7 +13,7 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 
-public class ResourcePackUpdater implements PreLaunchEntrypoint {
+public class ResourcePackUpdater implements ModInitializer {
 
     public static final String MOD_ID = "resourcepackupdater";
 
@@ -26,7 +26,7 @@ public class ResourcePackUpdater implements PreLaunchEntrypoint {
     public static final Config CONFIG = new Config();
 
     @Override
-    public void onPreLaunch() {
+    public void onInitialize() {
         MOD_VERSION = FabricLoader.getInstance().getModContainer(MOD_ID).get()
                 .getMetadata().getVersion().getFriendlyString();
         try {

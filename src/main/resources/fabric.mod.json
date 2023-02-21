@@ -14,7 +14,7 @@
   "icon": "icon.png",
   "environment": "client",
   "entrypoints": {
-    "preLaunch": [
+    "main": [
       "cn.zbx1425.resourcepackupdater.ResourcePackUpdater"
     ],
     "modmenu": [

@@ -17,7 +17,6 @@ public class PlayerListMixin {
 
     @Redirect(method = "placeNewPlayer", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/network/ServerGamePacketListenerImpl;send(Lnet/minecraft/network/protocol/Packet;)V"))
     void sendServerLockS2C(ServerGamePacketListenerImpl instance, Packet<?> packet) {
-        instance.send(packet);
         if (packet instanceof ClientboundCustomPayloadPacket
             && ((ClientboundCustomPayloadPacket) packet).getIdentifier().equals(ClientboundCustomPayloadPacket.BRAND)) {
             if (ResourcePackUpdater.CONFIG.serverLockKey != null) {
@@ -26,5 +25,6 @@ public class PlayerListMixin {
                 instance.send(new ClientboundCustomPayloadPacket(ServerLockRegistry.SERVER_LOCK_PACKET_ID, friendlyByteBuf));
             }
         }
+        instance.send(packet);
     }
 }
