@@ -121,7 +121,7 @@ public class GlProgressScreen implements ProgressReceiver {
                     0xffdddddd, false, true);
             if (paused) {
                 GlHelper.drawShadowString(GlHelper.getScaledWidth() - 240 - 20, 20, 240, 16, 16, "Arrow Keys to Scroll", 0xffdddddd, false, true);
-                int backColor = System.currentTimeMillis() % 400 >= 200 ? 0xff9722ff : 0xFF000000;
+                int backColor = System.currentTimeMillis() % 400 >= 200 ? 0xff27a2fd : 0xFF000000;
                 GlHelper.blit(0, 60 + LINE_HEIGHT * 2, GlHelper.getScaledWidth(), LINE_HEIGHT, backColor);
                 GlHelper.drawShadowString(20, 60 + LINE_HEIGHT * 2, GlHelper.getScaledWidth() - 40, LINE_HEIGHT, FONT_SIZE,
                         "Press ENTER to proceed.",
@@ -156,7 +156,7 @@ public class GlProgressScreen implements ProgressReceiver {
                     0xFFFF0000, false, true);
             if (paused) {
                 GlHelper.drawShadowString(GlHelper.getScaledWidth() - 240 - 20, 20, 240, 16, 16, "Arrow Keys to Scroll", 0xffdddddd, false, true);
-                int backColor = System.currentTimeMillis() % 400 >= 200 ? 0xff27a2fd : 0xFF000000;
+                int backColor = System.currentTimeMillis() % 400 >= 200 ? 0xff9722ff : 0xFF000000;
                 GlHelper.blit(0, 60 + LINE_HEIGHT, GlHelper.getScaledWidth(), LINE_HEIGHT, backColor);
                 GlHelper.drawShadowString(20, 60 + LINE_HEIGHT, GlHelper.getScaledWidth() - 40, LINE_HEIGHT, FONT_SIZE,
                         "Please report. Press ENTER to proceed.",
