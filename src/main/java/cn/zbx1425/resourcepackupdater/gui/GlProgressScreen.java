@@ -6,6 +6,7 @@ import com.google.common.base.Throwables;
 import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.texture.TextureManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,7 +30,7 @@ public class GlProgressScreen implements ProgressReceiver {
 
         final int LOG_LINE_HEIGHT = 20;
         float logBegin = 60 + LOG_LINE_HEIGHT * 3 + 40;
-        float usableLogHeight = Minecraft.getInstance().getWindow().getHeight() - logBegin - 20;
+        float usableLogHeight = GlHelper.getScaledHeight() - logBegin - 20;
         int logLines = (int) Math.floor(usableLogHeight / LOG_LINE_HEIGHT);
         logViewOffset = Math.max(0, logs.size() - logLines);
 
@@ -70,7 +71,7 @@ public class GlProgressScreen implements ProgressReceiver {
         if (paused) {
             final int LOG_LINE_HEIGHT = 20;
             float logBegin = 60 + LOG_LINE_HEIGHT * 3 + 40;
-            float usableLogHeight = Minecraft.getInstance().getWindow().getHeight() - logBegin - 20;
+            float usableLogHeight = GlHelper.getScaledHeight() - logBegin - 20;
             int logLines = (int) Math.floor(usableLogHeight / LOG_LINE_HEIGHT);
             int maxLogViewOffset = Math.max(0, logs.size() - logLines);
 
@@ -107,77 +108,76 @@ public class GlProgressScreen implements ProgressReceiver {
 
     public void redrawScreen(boolean swap) throws GlHelper.MinecraftStoppingException {
         GlHelper.clearScreen(1f, 0f, 1f);
-        var window = Minecraft.getInstance().getWindow();
         final int FONT_SIZE = 24;
         final int LINE_HEIGHT = 30;
 
         GlHelper.begin();
         RenderSystem.setShaderTexture(0, GlHelper.PRELOAD_FONT_TEXTURE);
+        // Minecraft.getInstance().getTextureManager().getTexture(GlHelper.PRELOAD_FONT_TEXTURE).setFilter(true, false);
         GlHelper.drawBlueGradientBackground();
         if (exception == null) {
-            GlHelper.drawString(20, 60, window.getWidth() - 40, LINE_HEIGHT * 2, FONT_SIZE,
+            GlHelper.drawShadowString(20, 60, GlHelper.getScaledWidth() - 40, LINE_HEIGHT * 2, FONT_SIZE,
                     String.format("%3d%%\n%3d%%\n", Math.round(primaryProgress * 100), Math.round(secondaryProgress * 100)),
-                    0xffdddddd, true, true);
+                    0xffdddddd, false, true);
             if (paused) {
-                GlHelper.drawString(window.getWidth() - 144 - 20, 20, 144, 16, 16, "Scroll AVAIL", 0xffdddddd, false, true);
-                int backColor = System.currentTimeMillis() % 400 >= 200 ? 0xFF008800 : 0xFF000000;
-                GlHelper.blit(0, 60 + LINE_HEIGHT * 2, window.getWidth(), LINE_HEIGHT, backColor);
-                int color = System.currentTimeMillis() % 400 < 200 ? 0xFFFF0000 : 0xFFFFFF00;
-                GlHelper.drawString(20, 60 + LINE_HEIGHT * 2, window.getWidth() - 40, LINE_HEIGHT, FONT_SIZE,
+                GlHelper.drawShadowString(GlHelper.getScaledWidth() - 240 - 20, 20, 240, 16, 16, "Arrow Keys to Scroll", 0xffdddddd, false, true);
+                int backColor = System.currentTimeMillis() % 400 >= 200 ? 0xff9722ff : 0xFF000000;
+                GlHelper.blit(0, 60 + LINE_HEIGHT * 2, GlHelper.getScaledWidth(), LINE_HEIGHT, backColor);
+                GlHelper.drawShadowString(20, 60 + LINE_HEIGHT * 2, GlHelper.getScaledWidth() - 40, LINE_HEIGHT, FONT_SIZE,
                         "Press ENTER to proceed.",
-                        color, false, true);
+                        0xffdddddd, false, true);
             } else {
-                GlHelper.drawString(window.getWidth() - 144 - 20, 20, 144, 16, 16, "Cancel: ESC", 0xffdddddd, false, true);
+                GlHelper.drawShadowString(GlHelper.getScaledWidth() - 144 - 20, 20, 144, 16, 16, "Cancel: ESC", 0xffdddddd, false, true);
                 boolean monospace = primaryInfo.length() > 0 && primaryInfo.charAt(0)== ':';
-                GlHelper.drawString(20, 60 + LINE_HEIGHT * 2, window.getWidth() - 40, LINE_HEIGHT, FONT_SIZE,
+                GlHelper.drawShadowString(20, 60 + LINE_HEIGHT * 2, GlHelper.getScaledWidth() - 40, LINE_HEIGHT, FONT_SIZE,
                         primaryInfo,
                         0xffdddddd, monospace, true);
             }
             float barBegin = 20 + FONT_SIZE * 2 + 20;
-            float usableBarWidth = window.getWidth() - barBegin - 50;
-            GlHelper.blit(barBegin, 60 + 3, window.getWidth() - barBegin - 40, LINE_HEIGHT - 6, 0xFF666666);
-            GlHelper.blit(barBegin + 3, 60 + 6, window.getWidth() - barBegin - 46, LINE_HEIGHT - 12, 0xFF222222);
+            float usableBarWidth = GlHelper.getScaledWidth() - barBegin - 50;
+            GlHelper.blit(barBegin, 60 + 3, GlHelper.getScaledWidth() - barBegin - 40, LINE_HEIGHT - 6, 0xFF666666);
+            GlHelper.blit(barBegin + 3, 60 + 6, GlHelper.getScaledWidth() - barBegin - 46, LINE_HEIGHT - 12, 0xFF222222);
             GlHelper.blit(barBegin + 5, 60 + 8, usableBarWidth * primaryProgress, LINE_HEIGHT - 16, 0xff9722ff);
-            GlHelper.blit(barBegin, 60 + LINE_HEIGHT + 3, window.getWidth() - barBegin - 40, LINE_HEIGHT - 6, 0xFF666666);
-            GlHelper.blit(barBegin + 3, 60 + LINE_HEIGHT + 6, window.getWidth() - barBegin - 46, LINE_HEIGHT - 12, 0xFF222222);
+            GlHelper.blit(barBegin, 60 + LINE_HEIGHT + 3, GlHelper.getScaledWidth() - barBegin - 40, LINE_HEIGHT - 6, 0xFF666666);
+            GlHelper.blit(barBegin + 3, 60 + LINE_HEIGHT + 6, GlHelper.getScaledWidth() - barBegin - 46, LINE_HEIGHT - 12, 0xFF222222);
             GlHelper.blit(barBegin + 5, 60 + LINE_HEIGHT + 8, usableBarWidth * secondaryProgress, LINE_HEIGHT - 16, 0xff27a2fd);
 
             final int LOG_FONT_SIZE = 16;
             final int LOG_LINE_HEIGHT = 20;
             float logBegin = 60 + LOG_LINE_HEIGHT * 3 + 40;
-            float usableLogHeight = Minecraft.getInstance().getWindow().getHeight() - logBegin - 20;
+            float usableLogHeight = GlHelper.getScaledHeight() - logBegin - 20;
             for (int i = logViewOffset; i < logs.size(); i++) {
-                GlHelper.drawString(20, logBegin + LOG_LINE_HEIGHT * (i - logViewOffset), window.getWidth() - 40, usableLogHeight, LOG_FONT_SIZE,
+                GlHelper.drawShadowString(20, logBegin + LOG_LINE_HEIGHT * (i - logViewOffset), GlHelper.getScaledWidth() - 40, usableLogHeight, LOG_FONT_SIZE,
                         logs.get(i), 0xFFDDDDDD, false, true);
             }
         } else {
-            GlHelper.drawString(20, 60, window.getWidth() - 40, LINE_HEIGHT, FONT_SIZE,
+            GlHelper.drawShadowString(20, 60, GlHelper.getScaledWidth() - 40, LINE_HEIGHT, FONT_SIZE,
                     "There was an error!",
                     0xFFFF0000, false, true);
             if (paused) {
-                GlHelper.drawString(window.getWidth() - 144 - 20, 20, 144, 16, 16, "Scroll AVAIL", 0xffdddddd, false, true);
-                int backColor = System.currentTimeMillis() % 400 >= 200 ? 0xFF880000 : 0xFF000000;
-                GlHelper.blit(0, 60 + LINE_HEIGHT, window.getWidth(), LINE_HEIGHT, backColor);
-                int color = System.currentTimeMillis() % 400 < 200 ? 0xFFFF0000 : 0xFFFFFF00;
-                GlHelper.drawString(20, 60 + LINE_HEIGHT, window.getWidth() - 40, LINE_HEIGHT, FONT_SIZE,
+                GlHelper.drawShadowString(GlHelper.getScaledWidth() - 240 - 20, 20, 240, 16, 16, "Arrow Keys to Scroll", 0xffdddddd, false, true);
+                int backColor = System.currentTimeMillis() % 400 >= 200 ? 0xff27a2fd : 0xFF000000;
+                GlHelper.blit(0, 60 + LINE_HEIGHT, GlHelper.getScaledWidth(), LINE_HEIGHT, backColor);
+                GlHelper.drawShadowString(20, 60 + LINE_HEIGHT, GlHelper.getScaledWidth() - 40, LINE_HEIGHT, FONT_SIZE,
                         "Please report. Press ENTER to proceed.",
-                        color, false, true);
+                        0xffdddddd, false, true);
             } else {
-                GlHelper.drawString(20, 60 + LINE_HEIGHT, window.getWidth() - 40, LINE_HEIGHT, FONT_SIZE,
+                GlHelper.drawShadowString(20, 60 + LINE_HEIGHT, GlHelper.getScaledWidth() - 40, LINE_HEIGHT, FONT_SIZE,
                         primaryInfo,
                         0xffdddddd, true, true);
             }
             final int LOG_FONT_SIZE = 16;
-            GlHelper.drawString(20, 60 + LINE_HEIGHT * 2 + 10, window.getWidth() - 40,  window.getHeight() - 100 - 10, LOG_FONT_SIZE,
+            GlHelper.drawShadowString(20, 60 + LINE_HEIGHT * 2 + 10, GlHelper.getScaledWidth() - 40,  GlHelper.getScaledHeight() - 100 - 10, LOG_FONT_SIZE,
                     Throwables.getStackTraceAsString(exception),
                     0xFFDDDDDD, false, false);
         }
         GlHelper.end();
 
         GlHelper.begin();
-        // GlHelper.drawString(20, 20, window.getWidth() - 40, LINE_HEIGHT, LINE_HEIGHT,
+        // GlHelper.drawShadowString(20, 20, GlHelper.getScaledWidth() - 40, LINE_HEIGHT, LINE_HEIGHT,
         //        "Resource Pack Updater © Zbx1425", 0xFFFFFF00, false, true);
         RenderSystem.setShaderTexture(0, GlHelper.PRELOAD_HEADER_TEXTURE);
+        // Minecraft.getInstance().getTextureManager().getTexture(GlHelper.PRELOAD_HEADER_TEXTURE).setFilter(true, false);
         GlHelper.blit(20, 20, 512, 32, 0, 0, 1, 1, 0xffdddddd);
         GlHelper.end();
 

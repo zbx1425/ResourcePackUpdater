@@ -56,9 +56,9 @@ public class AssetEncryption {
         byte[] eContent, key;
         try {
             MessageDigest sha256 = MessageDigest.getInstance("SHA-256");
-            byte[] profileId = UUIDUtil.uuidToByteArray(Minecraft.getInstance().getUser().getGameProfile().getId());
-            byte[] randomId = UUIDUtil.uuidToByteArray(UUID.randomUUID());
-            key = ArrayUtils.addAll(profileId, randomId);
+            KeyGenerator keyGenerator = KeyGenerator.getInstance("AES");
+            keyGenerator.init(256);
+            key = keyGenerator.generateKey().getEncoded();
 
             SecretKeySpec aesKey = new SecretKeySpec(key, "AES");
             byte[] iv = Arrays.copyOfRange(sha256.digest(key), 0, 16);

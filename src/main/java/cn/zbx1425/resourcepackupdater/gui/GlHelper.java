@@ -86,13 +86,12 @@ public class GlHelper {
     }
 
     public static void blit(float x1, float y1, float width, float height, float u1, float v1, float u2, float v2, int color) {
-        var window = Minecraft.getInstance().getWindow();
         float x2 = x1 + width;
         float y2 = y1 + height;
-        float glX1 = (x1 - window.getWidth() / 2f) / (window.getWidth() / 2f);
-        float glY1 = -(y1 - window.getHeight() / 2f) / (window.getHeight() / 2f);
-        float glX2 = (x2 - window.getWidth() / 2f) / (window.getWidth() / 2f);
-        float glY2 = -(y2 - window.getHeight() / 2f) / (window.getHeight() / 2f);
+        float glX1 = (x1 - getScaledWidth() / 2f) / (getScaledWidth() / 2f);
+        float glY1 = -(y1 - getScaledHeight() / 2f) / (getScaledHeight() / 2f);
+        float glX2 = (x2 - getScaledWidth() / 2f) / (getScaledWidth() / 2f);
+        float glY2 = -(y2 - getScaledHeight() / 2f) / (getScaledHeight() / 2f);
         bufferBuilder.vertex(glX1, glY1, 1f).uv(u1, v1).color(color).endVertex();
         bufferBuilder.vertex(glX2, glY1, 1f).uv(u2, v1).color(color).endVertex();
         bufferBuilder.vertex(glX2, glY2, 1f).uv(u2, v2).color(color).endVertex();
@@ -100,13 +99,12 @@ public class GlHelper {
     }
 
     public static void blit(float x1, float y1, float width, float height, int color) {
-        var window = Minecraft.getInstance().getWindow();
         float x2 = x1 + width;
         float y2 = y1 + height;
-        float glX1 = (x1 - window.getWidth() / 2f) / (window.getWidth() / 2f);
-        float glY1 = -(y1 - window.getHeight() / 2f) / (window.getHeight() / 2f);
-        float glX2 = (x2 - window.getWidth() / 2f) / (window.getWidth() / 2f);
-        float glY2 = -(y2 - window.getHeight() / 2f) / (window.getHeight() / 2f);
+        float glX1 = (x1 - getScaledWidth() / 2f) / (getScaledWidth() / 2f);
+        float glY1 = -(y1 - getScaledHeight() / 2f) / (getScaledHeight() / 2f);
+        float glX2 = (x2 - getScaledWidth() / 2f) / (getScaledWidth() / 2f);
+        float glY2 = -(y2 - getScaledHeight() / 2f) / (getScaledHeight() / 2f);
         bufferBuilder.vertex(glX1, glY1, 1f).uv(118f/256f, 8f/256f).color(color).endVertex();
         bufferBuilder.vertex(glX2, glY1, 1f).uv(118f/256f, 8f/256f).color(color).endVertex();
         bufferBuilder.vertex(glX2, glY2, 1f).uv(118f/256f, 8f/256f).color(color).endVertex();
@@ -131,6 +129,12 @@ public class GlHelper {
             0x16, 0x16, 0x16, 0x16, 0x16, 0x16, 0x17, 0x16, 0x16, 0x16, 0x16, 0x16, 0x26, 0x26, 0x26, 0x26,
             0x16, 0x16, 0x16, 0x16, 0x16, 0x16, 0x16, 0x16, 0x16, 0x16, 0x16, 0x16, 0x16, 0x16, 0x26, 0x16
     };
+
+    public static void drawShadowString(float x1, float y1, float width, float height, float fontSize,
+                                  String text, int color, boolean monospace, boolean noWrap) {
+        drawString(x1 + fontSize / 16, y1 + fontSize / 16, width, height, fontSize, text, 0xFF222222, monospace, noWrap);
+        drawString(x1, y1, width, height, fontSize, text, color, monospace, noWrap);
+    }
 
     public static void drawString(float x1, float y1, float width, float height, float fontSize,
                                   String text, int color, boolean monospace, boolean noWrap) {
@@ -196,6 +200,23 @@ public class GlHelper {
                 x += chr_width + CHAR_SPACING * fontSize;
             }
         }
+    }
+
+    public static int getScaledWidth() {
+        int rawWidth = Minecraft.getInstance().getWindow().getWidth();
+        if (rawWidth < 854) {
+            return rawWidth;
+        } else if (rawWidth < 1920) {
+            return (int)((rawWidth - 854) * 1f / (1920 - 854) * (1366 - 854) + 854);
+        } else {
+            return 1366;
+        }
+    }
+
+    public static int getScaledHeight() {
+        int rawWidth = Minecraft.getInstance().getWindow().getWidth();
+        int rawHeight = Minecraft.getInstance().getWindow().getHeight();
+        return (int)(rawHeight * (getScaledWidth() * 1f / rawWidth));
     }
 
     public static class MinecraftStoppingException extends IOException {
