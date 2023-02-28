@@ -7,6 +7,8 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.http.client.utils.URIBuilder;
 
 import java.io.*;
 import java.net.HttpURLConnection;
@@ -14,10 +16,8 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
+import java.security.MessageDigest;
+import java.util.*;
 
 public class RemoteMetadata {
 
@@ -118,7 +118,18 @@ public class RemoteMetadata {
     }
 
     private static void urlToStream(URL url, OutputStream target, ProgressReceiver cb) throws IOException {
+        try {
+            MessageDigest md5 = MessageDigest.getInstance("MD5");
+            byte[] digest = md5.digest((url.getPath() + "?REALLY-BAD-VALIDATION-IDEA")
+                    .getBytes(StandardCharsets.UTF_8));
+            String digestStr = StringUtils.stripEnd(Base64.getEncoder().encodeToString(digest).replace('+', '-').replace('/', '_'), "=");
+            url = new URIBuilder(url.toURI()).addParameter("md5", digestStr).build().toURL();
+        } catch (Exception ex) {
+            throw new IOException(ex);
+        }
+
         HttpURLConnection httpConnection = (HttpURLConnection) (url.openConnection());
+        httpConnection.setRequestProperty("User-Agent", "ResourcePackUpdater/" + ResourcePackUpdater.MOD_VERSION + " +https://www.zbx1425.cn");
         httpConnection.setConnectTimeout(10000);
         httpConnection.setReadTimeout(10000);
         long fileSize = httpConnection.getContentLength();
@@ -126,20 +137,16 @@ public class RemoteMetadata {
 
         try (BufferedOutputStream bos = new BufferedOutputStream(target); InputStream inputStream = url.openStream()) {
             final ProgressOutputStream pOfs = new ProgressOutputStream(bos, new ProgressOutputStream.WriteListener() {
-                long lastAmount = 0;
+                long lastAmount = -1;
                 final long noticeDivisor = 8192;
-                long lastTime = System.currentTimeMillis();
 
                 @Override
                 public void registerWrite(long amountOfBytesWritten) throws IOException {
                     if (lastAmount / noticeDivisor != amountOfBytesWritten / noticeDivisor) {
-                        long deltaT = System.currentTimeMillis() - lastTime;
-                        if (deltaT < 1) deltaT = 1000;
                         String message;
                         message = String.format(": %6d KiB / %6d KiB", amountOfBytesWritten / 1024, completeFileSize / 1024);
                         cb.setSecondaryProgress(amountOfBytesWritten * 1f / completeFileSize, message);
                         lastAmount = amountOfBytesWritten;
-                        lastTime = System.currentTimeMillis();
                     }
                 }
             });
