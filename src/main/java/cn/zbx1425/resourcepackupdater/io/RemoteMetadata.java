@@ -147,7 +147,7 @@ public class RemoteMetadata {
     public void endDownloads(ProgressReceiver cb) throws IOException {
         long elapsedTimeSecs = (System.currentTimeMillis() - downloadStartTime) / 1000;
         long speedKibPS = downloadedBytes / elapsedTimeSecs / 1024;
-        cb.printLog(String.format("Downloaded %.2f MiB in %d:%d. Average speed %d KiB/s.",
+        cb.printLog(String.format("Downloaded %.2f MiB in %02d:%02d. Average speed %d KiB/s.",
                 downloadedBytes * 1f / 1024 / 1024, elapsedTimeSecs / 60, elapsedTimeSecs % 60, speedKibPS));
     }
 
