@@ -2,7 +2,9 @@ package cn.zbx1425.resourcepackupdater.gui;
 
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.Resource;
+import net.minecraft.server.packs.metadata.MetadataSectionSerializer;
 
+import java.io.IOException;
 import java.io.InputStream;
 
 #if MC_VERSION >= "11900"
@@ -42,9 +44,8 @@ public class PreloadTextureResource implements Resource {
         return false;
     }
 
-    @Nullable
     @Override
-    public <T> T getMetadata(@NotNull MetadataSectionSerializer<T> metadataSectionSerializer) {
+    public <T> T getMetadata(MetadataSectionSerializer<T> metadataSectionSerializer) {
         return null;
     }
 
