@@ -52,6 +52,7 @@ public class ServerLockRegistry {
     public static boolean shouldRefuseProvidingFile(String resourcePath) {
         if (Objects.equals(resourcePath, "pack.mcmeta") || Objects.equals(resourcePath, "pack.png")) return false;
         if (lockAllSyncedPacks) return true;
+        if (localServerLock == null) return false;
         return !Objects.equals(localServerLock, remoteServerLock);
     }
 
@@ -61,18 +62,21 @@ public class ServerLockRegistry {
 
     public static void onSetServerLock(String serverLock) {
         remoteServerLock = serverLock;
-        if (lockAllSyncedPacks) {
-            Minecraft.getInstance().getToasts().addToast(new SystemToast(SystemToast.SystemToastIds.PACK_LOAD_FAILURE,
-                Text.literal("伺服器資源包不完整而未被采用"), Text.literal("您可按 F3+T 重試下載。如有錯誤請聯絡管理人員。")
-            ));
-            Minecraft.getInstance().getToasts().addToast(new SystemToast(SystemToast.SystemToastIds.PACK_LOAD_FAILURE,
-                Text.literal("Resource Pack Incomplete and Thus not Used"), Text.literal("Press F3+T to download again. Ask the staff when error.")
-            ));
-        }
     }
 
     public static void onAfterSetServerLock() {
-        if (remoteServerLock == null) {
+        if (lockAllSyncedPacks) {
+            Minecraft.getInstance().getToasts().addToast(new SystemToast(SystemToast.SystemToastIds.PACK_LOAD_FAILURE,
+                    Text.literal("同步資源包不完整而未被采用"), Text.literal("您可按 F3+T 重試下載。如有錯誤請聯絡管理人員。")
+            ));
+            Minecraft.getInstance().getToasts().addToast(new SystemToast(SystemToast.SystemToastIds.PACK_LOAD_FAILURE,
+                    Text.literal("Synced Resource Pack Incomplete and Thus not Used"), Text.literal("Press F3+T to download again. Ask the staff when error.")
+            ));
+        }
+
+        if (localServerLock == null) {
+            ResourcePackUpdater.LOGGER.info("Asset coordination not required by this pack.");
+        } else if (remoteServerLock == null) {
             ResourcePackUpdater.LOGGER.info("Asset coordination identifier not received.");
         } else if (!remoteServerLock.equals(localServerLock)) {
             ResourcePackUpdater.LOGGER.info("Asset coordination identifier differs.");
@@ -81,7 +85,7 @@ public class ServerLockRegistry {
         } else {
             ResourcePackUpdater.LOGGER.info("Asset coordination is applicable.");
         }
-        if (!Objects.equals(packAppliedServerLock, remoteServerLock)) {
+        if (localServerLock == null || !Objects.equals(packAppliedServerLock, remoteServerLock)) {
             packAppliedServerLock = remoteServerLock;
             Minecraft.getInstance().execute(() -> Minecraft.getInstance().reloadResourcePacks());
         }
