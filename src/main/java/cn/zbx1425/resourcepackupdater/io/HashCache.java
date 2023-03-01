@@ -11,7 +11,7 @@ import java.util.HashMap;
 
 public class HashCache {
 
-    public HashMap<String, CacheEntry> entries = new HashMap<>();
+    public HashMap<String, FileProperty> entries = new HashMap<>();
 
     private static final MessageDigest sha1Digest;
     private boolean isDirty = false;
@@ -38,7 +38,7 @@ public class HashCache {
                 final long mTime = stream.readLong();
                 final int hashLength = stream.readInt();
                 final byte[] hash = stream.readNBytes(hashLength);
-                entries.put(key, new CacheEntry(hash, mTime));
+                entries.put(key, new FileProperty(hash, mTime));
             }
         }
         isDirty = false;
@@ -61,14 +61,14 @@ public class HashCache {
     }
 
     public byte[] getDigest(String key, File file) throws IOException {
-        CacheEntry entry = entries.getOrDefault(key, null);
+        FileProperty entry = entries.getOrDefault(key, null);
         if (entry != null) {
             if (entry.mTime == file.lastModified()) {
                 return entry.hash;
             }
         }
         byte[] hash = getDigest(file);
-        entries.put(key, new CacheEntry(hash, file.lastModified()));
+        entries.put(key, new FileProperty(hash, file.lastModified()));
         isDirty = true;
         return hash;
     }
@@ -85,16 +85,5 @@ public class HashCache {
         }
         fis.close();
         return sha1Digest.digest();
-    }
-
-    public static class CacheEntry {
-
-        public byte[] hash;
-        public long mTime;
-
-        public CacheEntry(byte[] hash, long mTime) {
-            this.hash = hash;
-            this.mTime = mTime;
-        }
     }
 }

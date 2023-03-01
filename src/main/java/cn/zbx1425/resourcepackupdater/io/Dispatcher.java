@@ -95,18 +95,29 @@ public class Dispatcher {
             cb.amendLastLog("Done");
 
             int handledFiles = 0;
+            long totalBytesToDownload = 0;
             int totalFiles = filesToCreate.size() + filesToUpdate.size();
+            for (String file : filesToCreate) totalBytesToDownload += remoteMetadata.files.get(file).size;
+            for (String file : filesToUpdate) totalBytesToDownload += remoteMetadata.files.get(file).size;
             remoteMetadata.beginDownloads(cb);
             for (String file : filesToCreate) {
                 cb.printLog("Downloading " + file + " ...");
-                cb.setProgress(handledFiles * 1f / totalFiles, 0);
+                if (totalBytesToDownload > 0) {
+                    cb.setProgress(remoteMetadata.downloadedBytes * 1f / totalBytesToDownload, 0);
+                } else {
+                    cb.setProgress(handledFiles * 1f / totalFiles, 0);
+                }
                 remoteMetadata.httpGetFile(Paths.get(baseDir, file), file, cb);
                 cb.amendLastLog("Done");
                 handledFiles++;
             }
             for (String file : filesToUpdate) {
                 cb.printLog("Updating " + file + " ...");
-                cb.setProgress(handledFiles * 1f / totalFiles, 0);
+                if (totalBytesToDownload > 0) {
+                    cb.setProgress(remoteMetadata.downloadedBytes * 1f / totalBytesToDownload, 0);
+                } else {
+                    cb.setProgress(handledFiles * 1f / totalFiles, 0);
+                }
                 remoteMetadata.httpGetFile(Paths.get(baseDir, file), file, cb);
                 cb.amendLastLog("Done");
                 handledFiles++;

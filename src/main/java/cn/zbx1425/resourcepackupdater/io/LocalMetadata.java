@@ -94,7 +94,7 @@ public class LocalMetadata {
     public List<String> getFilesToUpdate(RemoteMetadata other) {
         return files.entrySet().stream().filter(
                 entry -> other.files.containsKey(entry.getKey())
-                        && !Arrays.equals(other.files.get(entry.getKey()), entry.getValue())
+                        && !Arrays.equals(other.files.get(entry.getKey()).hash, entry.getValue())
         ).map(Map.Entry::getKey).toList();
     }
 

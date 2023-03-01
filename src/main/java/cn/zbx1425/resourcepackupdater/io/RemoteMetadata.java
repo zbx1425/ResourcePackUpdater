@@ -29,10 +29,10 @@ public class RemoteMetadata {
     public String baseUrl;
     public boolean encrypt = false;
     public List<String> dirs = new ArrayList<>();
-    public HashMap<String, byte[]> files = new HashMap<>();
+    public HashMap<String, FileProperty> files = new HashMap<>();
 
-    private long downloadStartTime;
-    private long downloadedBytes;
+    public long downloadStartTime;
+    public long downloadedBytes;
 
     public RemoteMetadata(String baseUrl) {
         this.baseUrl = baseUrl;
@@ -66,7 +66,7 @@ public class RemoteMetadata {
                 dirs.add(entry.getKey());
             }
             for (var entry : metadataObj.get("files").getAsJsonObject().entrySet()) {
-                files.put(entry.getKey(), Hex.decodeHex(entry.getValue().getAsJsonObject().get("sha1").getAsString().toCharArray()));
+                files.put(entry.getKey(), new FileProperty(entry.getValue().getAsJsonObject()));
             }
         } else if (metadataVersion == 2) {
             JsonObject contentObj = metadataObj.get("file_content").getAsJsonObject();
@@ -74,7 +74,7 @@ public class RemoteMetadata {
                 dirs.add(entry.getKey());
             }
             for (var entry : contentObj.get("files").getAsJsonObject().entrySet()) {
-                files.put(entry.getKey(), Hex.decodeHex(entry.getValue().getAsJsonObject().get("sha1").getAsString().toCharArray()));
+                files.put(entry.getKey(), new FileProperty(entry.getValue().getAsJsonObject()));
             }
         } else {
             throw new MismatchingVersionException("Unsupported metadata protocol version: " + metadataVersion);
@@ -88,7 +88,7 @@ public class RemoteMetadata {
         while (true) {
             try (ByteArrayOutputStream bos = new ByteArrayOutputStream()) {
                 try {
-                    urlToStream(url, bos, cb);
+                    urlToStream(url, 0, bos, cb);
                     return bos.toString(StandardCharsets.UTF_8);
                 } catch (IOException ex) {
                     if (retryCount < MAX_RETRIES) {
@@ -112,7 +112,7 @@ public class RemoteMetadata {
         while (true) {
             try {
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                urlToStream(url, baos, cb);
+                urlToStream(url, files.get(file).size, baos, cb);
                 if (encrypt) {
                     AssetEncryption.writeEncrypted(baos.toByteArray(), localPath.toFile());
                 } else {
@@ -120,7 +120,7 @@ public class RemoteMetadata {
                         bos.write(baos.toByteArray());
                     }
                 }
-                byte[] expectedSha = files.get(file);
+                byte[] expectedSha = files.get(file).hash;
                 byte[] localSha = HashCache.getDigest(localPath.toFile());
                 if (!Arrays.equals(localSha, expectedSha)) {
                     throw new IOException("SHA1 mismatch: " + Hex.encodeHexString(localSha) + " downloaded, " +
@@ -156,7 +156,7 @@ public class RemoteMetadata {
             .connectTimeout(Duration.ofSeconds(10))
             .build();
 
-    private void urlToStream(URL url, OutputStream target, ProgressReceiver cb) throws IOException {
+    private void urlToStream(URL url, long expectedSize, OutputStream target, ProgressReceiver cb) throws IOException {
         URI requestUri;
         try {
             MessageDigest md5 = MessageDigest.getInstance("MD5");
@@ -181,8 +181,7 @@ public class RemoteMetadata {
             throw new IOException(ex);
         }
 
-        long fileSize = Long.parseLong(httpResponse.headers().firstValue("Content-Length").orElse("0"));
-        final long completeFileSize = fileSize > 0 ? fileSize : Integer.MAX_VALUE;
+        long fileSize = Long.parseLong(httpResponse.headers().firstValue("Content-Length").orElse(Long.toString(expectedSize)));
 
         long downloadedBytesBefore = downloadedBytes;
         try {
@@ -196,9 +195,15 @@ public class RemoteMetadata {
                         if (lastAmount / noticeDivisor != amountOfBytesWritten / noticeDivisor) {
                             downloadedBytes += (amountOfBytesWritten - lastAmount);
                             long elapsedTimeSecs = (System.currentTimeMillis() - downloadStartTime) / 1000;
-                            String message = String.format(": %6d KiB / %6d KiB; %6d KiB/s overall",
-                                    amountOfBytesWritten / 1024, completeFileSize / 1024, elapsedTimeSecs == 0 ? 0 : downloadedBytes / elapsedTimeSecs / 1024);
-                            cb.setSecondaryProgress(amountOfBytesWritten * 1f / completeFileSize, message);
+                            if (fileSize > 0) {
+                                String message = String.format(": %6d KiB / %6d KiB; %6d KiB/s overall",
+                                        amountOfBytesWritten / 1024, fileSize / 1024, elapsedTimeSecs == 0 ? 0 : downloadedBytes / elapsedTimeSecs / 1024);
+                                cb.setSecondaryProgress(amountOfBytesWritten * 1f / fileSize, message);
+                            } else {
+                                String message = String.format(": %6d KiB downloaded; %6d KiB/s overall",
+                                        amountOfBytesWritten / 1024, elapsedTimeSecs == 0 ? 0 : downloadedBytes / elapsedTimeSecs / 1024);
+                                cb.setSecondaryProgress(((System.currentTimeMillis() - downloadStartTime) / 1000f) % 1f, message);
+                            }
                             lastAmount = amountOfBytesWritten;
                         }
                     }
