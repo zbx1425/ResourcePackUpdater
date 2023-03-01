@@ -32,4 +32,6 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: Fabric Artifacts
-          path: build/
+          path: |
+            build/libs/*.jar
+            !build/libs/*-sources.jar
