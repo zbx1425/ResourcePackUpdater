@@ -37,7 +37,7 @@ public class RemoteMetadata {
     public byte[] fetchDirChecksum(ProgressReceiver cb) throws Exception {
         String metaString = httpGetString(baseUrl + "/metadata.sha1", cb);
         if (metaString.startsWith("{")) {
-            JsonObject metadataObj = ResourcePackUpdater.JSON_PARSER.parseString(metaString).getAsJsonObject();
+            JsonObject metadataObj = ResourcePackUpdater.JSON_PARSER.parse(metaString).getAsJsonObject();
             assertMetadataVersion(metadataObj);
             if (metadataObj.has("encrypt")) encrypt = metadataObj.get("encrypt").getAsBoolean();
             return Hex.decodeHex(metadataObj.get("sha1").getAsString().toCharArray());
@@ -49,7 +49,7 @@ public class RemoteMetadata {
     public void fetch(ProgressReceiver cb) throws Exception {
         dirs.clear();
         files.clear();
-        var metadataObj = ResourcePackUpdater.JSON_PARSER.parseString(
+        var metadataObj = ResourcePackUpdater.JSON_PARSER.parse(
                 httpGetString(baseUrl + "/metadata.json", cb)
         ).getAsJsonObject();
         assertMetadataVersion(metadataObj);

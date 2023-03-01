@@ -6,7 +6,7 @@ import net.minecraft.resources.ResourceLocation;
 #if MC_VERSION >= "11800"
 import net.minecraft.server.packs.resources.MultiPackResourceManager;
 #else
-import net.minecraft.server.packs.resources.ReloadableResourceManager;
+import net.minecraft.server.packs.resources.SimpleReloadableResourceManager;
 #endif
 import net.minecraft.server.packs.resources.Resource;
 import org.spongepowered.asm.mixin.Mixin;
@@ -19,7 +19,7 @@ import java.util.Optional;
 #if MC_VERSION >= "11800"
 @Mixin(MultiPackResourceManager.class)
 #else
-@Mixin(ReloadableResourceManager.class)
+@Mixin(SimpleReloadableResourceManager.class)
 #endif
 public class MultiPackResourceManagerMixin {
 
