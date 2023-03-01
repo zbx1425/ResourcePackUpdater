@@ -22,6 +22,7 @@ import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.time.Duration;
 import java.util.*;
+import java.util.zip.GZIPInputStream;
 
 public class RemoteMetadata {
 
@@ -155,6 +156,7 @@ public class RemoteMetadata {
         HttpRequest httpRequest = HttpRequest.newBuilder(requestUri)
                 .timeout(Duration.ofSeconds(10))
                 .setHeader("User-Agent", "ResourcePackUpdater/" + ResourcePackUpdater.MOD_VERSION + " +https://www.zbx1425.cn")
+                .setHeader("Accept-Encoding", "gzip")
                 .GET()
                 .build();
         HttpResponse<InputStream> httpResponse;
@@ -167,7 +169,7 @@ public class RemoteMetadata {
         long fileSize = Long.parseLong(httpResponse.headers().firstValue("Content-Length").orElse("0"));
         final long completeFileSize = fileSize > 0 ? fileSize : Integer.MAX_VALUE;
 
-        try (BufferedOutputStream bos = new BufferedOutputStream(target); InputStream inputStream = httpResponse.body()) {
+        try (BufferedOutputStream bos = new BufferedOutputStream(target); InputStream inputStream = unwrapHttpResponse(httpResponse)) {
             final ProgressOutputStream pOfs = new ProgressOutputStream(bos, new ProgressOutputStream.WriteListener() {
                 long lastAmount = -1;
                 final long noticeDivisor = 8192;
@@ -183,6 +185,18 @@ public class RemoteMetadata {
                 }
             });
             IOUtils.copy(new BufferedInputStream(inputStream), pOfs);
+        }
+    }
+
+    private static InputStream unwrapHttpResponse(HttpResponse<InputStream> response) throws IOException {
+        String contentEncoding = response.headers().firstValue("Content-Encoding").orElse("").toLowerCase(Locale.ROOT);
+        switch (contentEncoding) {
+            case "":
+                return response.body();
+            case "gzip":
+                return new GZIPInputStream(response.body());
+            default:
+                throw new IOException("Unsupported Content-Encoding: " + contentEncoding);
         }
     }
 
