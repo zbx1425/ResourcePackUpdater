@@ -31,6 +31,9 @@ public class RemoteMetadata {
     public List<String> dirs = new ArrayList<>();
     public HashMap<String, byte[]> files = new HashMap<>();
 
+    private long downloadStartTime;
+    private long downloadedBytes;
+
     public RemoteMetadata(String baseUrl) {
         this.baseUrl = baseUrl;
     }
@@ -78,7 +81,7 @@ public class RemoteMetadata {
         }
     }
 
-    private static String httpGetString(String urlStr, ProgressReceiver cb) throws IOException {
+    private String httpGetString(String urlStr, ProgressReceiver cb) throws IOException {
         URL url = new URL(urlStr);
         int retryCount = 0;
         final int MAX_RETRIES = 3;
@@ -136,12 +139,24 @@ public class RemoteMetadata {
         }
     }
 
+    public void beginDownloads(ProgressReceiver cb) throws IOException {
+        downloadStartTime = System.currentTimeMillis();
+        downloadedBytes = 0;
+    }
+
+    public void endDownloads(ProgressReceiver cb) throws IOException {
+        long elapsedTimeSecs = (System.currentTimeMillis() - downloadStartTime) / 1000;
+        long speedKibPS = downloadedBytes / elapsedTimeSecs / 1024;
+        cb.printLog(String.format("Downloaded %.2f MiB in %d:%d. Average speed %d KiB/s.",
+                downloadedBytes * 1f / 1024 / 1024, elapsedTimeSecs / 60, elapsedTimeSecs % 60, speedKibPS));
+    }
+
     private static final HttpClient httpClient = HttpClient.newBuilder()
             .followRedirects(HttpClient.Redirect.NORMAL)
             .connectTimeout(Duration.ofSeconds(10))
             .build();
 
-    private static void urlToStream(URL url, OutputStream target, ProgressReceiver cb) throws IOException {
+    private void urlToStream(URL url, OutputStream target, ProgressReceiver cb) throws IOException {
         URI requestUri;
         try {
             MessageDigest md5 = MessageDigest.getInstance("MD5");
@@ -169,23 +184,32 @@ public class RemoteMetadata {
         long fileSize = Long.parseLong(httpResponse.headers().firstValue("Content-Length").orElse("0"));
         final long completeFileSize = fileSize > 0 ? fileSize : Integer.MAX_VALUE;
 
-        try (BufferedOutputStream bos = new BufferedOutputStream(target); InputStream inputStream = unwrapHttpResponse(httpResponse)) {
-            final ProgressOutputStream pOfs = new ProgressOutputStream(bos, new ProgressOutputStream.WriteListener() {
-                long lastAmount = -1;
-                final long noticeDivisor = 8192;
+        long downloadedBytesBefore = downloadedBytes;
+        try {
+            try (BufferedOutputStream bos = new BufferedOutputStream(target); InputStream inputStream = unwrapHttpResponse(httpResponse)) {
+                final ProgressOutputStream pOfs = new ProgressOutputStream(bos, new ProgressOutputStream.WriteListener() {
+                    long lastAmount = -1;
+                    final long noticeDivisor = 8192;
 
-                @Override
-                public void registerWrite(long amountOfBytesWritten) throws IOException {
-                    if (lastAmount / noticeDivisor != amountOfBytesWritten / noticeDivisor) {
-                        String message;
-                        message = String.format(": %6d KiB / %6d KiB", amountOfBytesWritten / 1024, completeFileSize / 1024);
-                        cb.setSecondaryProgress(amountOfBytesWritten * 1f / completeFileSize, message);
-                        lastAmount = amountOfBytesWritten;
+                    @Override
+                    public void registerWrite(long amountOfBytesWritten) throws IOException {
+                        if (lastAmount / noticeDivisor != amountOfBytesWritten / noticeDivisor) {
+                            downloadedBytes += (amountOfBytesWritten - lastAmount);
+                            long elapsedTimeSecs = (System.currentTimeMillis() - downloadStartTime) / 1000;
+                            String message = String.format(": %6d KiB / %6d KiB; %6d KiB/s overall",
+                                    amountOfBytesWritten / 1024, completeFileSize / 1024, downloadedBytes / elapsedTimeSecs / 1024);
+                            cb.setSecondaryProgress(amountOfBytesWritten * 1f / completeFileSize, message);
+                            lastAmount = amountOfBytesWritten;
+                        }
                     }
-                }
-            });
-            IOUtils.copy(new BufferedInputStream(inputStream), pOfs);
+                });
+                IOUtils.copy(new BufferedInputStream(inputStream), pOfs);
+            }
+        } catch (Exception ex) {
+            downloadedBytes = downloadedBytesBefore;
+            throw ex;
         }
+        downloadedBytes = downloadedBytesBefore + fileSize;
     }
 
     private static InputStream unwrapHttpResponse(HttpResponse<InputStream> response) throws IOException {

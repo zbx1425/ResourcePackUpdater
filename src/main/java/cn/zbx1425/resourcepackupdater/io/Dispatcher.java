@@ -96,6 +96,7 @@ public class Dispatcher {
 
             int handledFiles = 0;
             int totalFiles = filesToCreate.size() + filesToUpdate.size();
+            remoteMetadata.beginDownloads(cb);
             for (String file : filesToCreate) {
                 cb.printLog("Downloading " + file + " ...");
                 cb.setProgress(handledFiles * 1f / totalFiles, 0);
@@ -110,6 +111,7 @@ public class Dispatcher {
                 cb.amendLastLog("Done");
                 handledFiles++;
             }
+            remoteMetadata.endDownloads(cb);
 
             cb.setProgress(1, 1);
             cb.printLog("");
