@@ -16,9 +16,17 @@ import java.util.Optional;
 public class MultiPackResourceManagerMixin {
 
     @Inject(at = @At("HEAD"), method = "getResource", cancellable = true)
+#if MC_VERSION >= "11900"
     void getResource(ResourceLocation resourceLocation, CallbackInfoReturnable<Optional<Resource>> cir) {
+#else
+    void getResource(ResourceLocation resourceLocation, CallbackInfoReturnable<Resource> cir) {
+#endif
         if (resourceLocation.getNamespace().equals(ResourcePackUpdater.MOD_ID)) {
+#if MC_VERSION >= "11900"
             cir.setReturnValue(Optional.of(new PreloadTextureResource(resourceLocation)));
+#else
+            cir.setReturnValue(new PreloadTextureResource(resourceLocation));
+#endif
             cir.cancel();
         }
     }
