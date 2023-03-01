@@ -11,12 +11,16 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.http.client.utils.URIBuilder;
 
 import java.io.*;
-import java.net.HttpURLConnection;
+import java.net.URI;
 import java.net.URL;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
+import java.time.Duration;
 import java.util.*;
 
 public class RemoteMetadata {
@@ -75,9 +79,23 @@ public class RemoteMetadata {
 
     private static String httpGetString(String urlStr, ProgressReceiver cb) throws IOException {
         URL url = new URL(urlStr);
-        try (ByteArrayOutputStream bos = new ByteArrayOutputStream()) {
-            urlToStream(url, bos, cb);
-            return bos.toString(StandardCharsets.UTF_8);
+        int retryCount = 0;
+        final int MAX_RETRIES = 3;
+        while (true) {
+            try (ByteArrayOutputStream bos = new ByteArrayOutputStream()) {
+                try {
+                    urlToStream(url, bos, cb);
+                    return bos.toString(StandardCharsets.UTF_8);
+                } catch (IOException ex) {
+                    if (retryCount < MAX_RETRIES) {
+                        cb.printLog(ex.toString());
+                        retryCount++;
+                        cb.printLog(String.format("Retrying (%d/%d) ...", retryCount, MAX_RETRIES));
+                    } else {
+                        throw ex;
+                    }
+                }
+            }
         }
     }
 
@@ -109,7 +127,7 @@ public class RemoteMetadata {
                 if (retryCount < MAX_RETRIES) {
                     cb.printLog(ex.toString());
                     retryCount++;
-                    cb.printLog(String.format("Retrying (%d/%d)", retryCount, MAX_RETRIES));
+                    cb.printLog(String.format("Retrying (%d/%d) ...", retryCount, MAX_RETRIES));
                 } else {
                     throw ex;
                 }
@@ -117,25 +135,39 @@ public class RemoteMetadata {
         }
     }
 
+    private static final HttpClient httpClient = HttpClient.newBuilder()
+            .followRedirects(HttpClient.Redirect.NORMAL)
+            .connectTimeout(Duration.ofSeconds(10))
+            .build();
+
     private static void urlToStream(URL url, OutputStream target, ProgressReceiver cb) throws IOException {
+        URI requestUri;
         try {
             MessageDigest md5 = MessageDigest.getInstance("MD5");
             byte[] digest = md5.digest((url.getPath() + "?REALLY-BAD-VALIDATION-IDEA")
                     .getBytes(StandardCharsets.UTF_8));
             String digestStr = StringUtils.stripEnd(Base64.getEncoder().encodeToString(digest).replace('+', '-').replace('/', '_'), "=");
-            url = new URIBuilder(url.toURI()).addParameter("md5", digestStr).build().toURL();
+            requestUri = new URIBuilder(url.toURI()).addParameter("md5", digestStr).build();
         } catch (Exception ex) {
             throw new IOException(ex);
         }
 
-        HttpURLConnection httpConnection = (HttpURLConnection) (url.openConnection());
-        httpConnection.setRequestProperty("User-Agent", "ResourcePackUpdater/" + ResourcePackUpdater.MOD_VERSION + " +https://www.zbx1425.cn");
-        httpConnection.setConnectTimeout(10000);
-        httpConnection.setReadTimeout(10000);
-        long fileSize = httpConnection.getContentLength();
+        HttpRequest httpRequest = HttpRequest.newBuilder(requestUri)
+                .timeout(Duration.ofSeconds(10))
+                .setHeader("User-Agent", "ResourcePackUpdater/" + ResourcePackUpdater.MOD_VERSION + " +https://www.zbx1425.cn")
+                .GET()
+                .build();
+        HttpResponse<InputStream> httpResponse;
+        try {
+            httpResponse = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofInputStream());
+        } catch (InterruptedException ex) {
+            throw new IOException(ex);
+        }
+
+        long fileSize = Long.parseLong(httpResponse.headers().firstValue("Content-Length").orElse("0"));
         final long completeFileSize = fileSize > 0 ? fileSize : Integer.MAX_VALUE;
 
-        try (BufferedOutputStream bos = new BufferedOutputStream(target); InputStream inputStream = url.openStream()) {
+        try (BufferedOutputStream bos = new BufferedOutputStream(target); InputStream inputStream = httpResponse.body()) {
             final ProgressOutputStream pOfs = new ProgressOutputStream(bos, new ProgressOutputStream.WriteListener() {
                 long lastAmount = -1;
                 final long noticeDivisor = 8192;
