@@ -35,7 +35,7 @@ public class Config {
         if (!Files.isRegularFile(getConfigFilePath())) {
             save();
         }
-        JsonObject obj = (JsonObject)JsonParser.parseString(Files.readString(getConfigFilePath()));
+        JsonObject obj = (JsonObject)ResourcePackUpdater.JSON_PARSER.parseString(Files.readString(getConfigFilePath()));
         localPackName = obj.get("localPackName").getAsString();
         activeSource = new SourceProperty(obj.get("activeSource").getAsJsonObject());
         if (obj.get("disableBuiltinSources").getAsBoolean()) {

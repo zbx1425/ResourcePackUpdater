@@ -37,19 +37,19 @@ public class RemoteMetadata {
     public byte[] fetchDirChecksum(ProgressReceiver cb) throws Exception {
         String metaString = httpGetString(baseUrl + "/metadata.sha1", cb);
         if (metaString.startsWith("{")) {
-            JsonObject metadataObj = JsonParser.parseString(metaString).getAsJsonObject();
+            JsonObject metadataObj = ResourcePackUpdater.JSON_PARSER.parseString(metaString).getAsJsonObject();
             assertMetadataVersion(metadataObj);
             if (metadataObj.has("encrypt")) encrypt = metadataObj.get("encrypt").getAsBoolean();
-            return Hex.decodeHex(metadataObj.get("sha1").getAsString());
+            return Hex.decodeHex(metadataObj.get("sha1").getAsString().toCharArray());
         } else {
-            return Hex.decodeHex(metaString.trim());
+            return Hex.decodeHex(metaString.trim().toCharArray());
         }
     }
 
     public void fetch(ProgressReceiver cb) throws Exception {
         dirs.clear();
         files.clear();
-        var metadataObj = JsonParser.parseString(
+        var metadataObj = ResourcePackUpdater.JSON_PARSER.parseString(
                 httpGetString(baseUrl + "/metadata.json", cb)
         ).getAsJsonObject();
         assertMetadataVersion(metadataObj);
@@ -62,7 +62,7 @@ public class RemoteMetadata {
                 dirs.add(entry.getKey());
             }
             for (var entry : metadataObj.get("files").getAsJsonObject().entrySet()) {
-                files.put(entry.getKey(), Hex.decodeHex(entry.getValue().getAsJsonObject().get("sha1").getAsString()));
+                files.put(entry.getKey(), Hex.decodeHex(entry.getValue().getAsJsonObject().get("sha1").getAsString().toCharArray()));
             }
         } else if (metadataVersion == 2) {
             JsonObject contentObj = metadataObj.get("file_content").getAsJsonObject();
@@ -70,7 +70,7 @@ public class RemoteMetadata {
                 dirs.add(entry.getKey());
             }
             for (var entry : contentObj.get("files").getAsJsonObject().entrySet()) {
-                files.put(entry.getKey(), Hex.decodeHex(entry.getValue().getAsJsonObject().get("sha1").getAsString()));
+                files.put(entry.getKey(), Hex.decodeHex(entry.getValue().getAsJsonObject().get("sha1").getAsString().toCharArray()));
             }
         } else {
             throw new MismatchingVersionException("Unsupported metadata protocol version: " + metadataVersion);

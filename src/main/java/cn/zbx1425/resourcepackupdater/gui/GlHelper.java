@@ -3,10 +3,7 @@ package cn.zbx1425.resourcepackupdater.gui;
 import cn.zbx1425.resourcepackupdater.ResourcePackUpdater;
 import com.mojang.blaze3d.platform.Window;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.BufferBuilder;
-import com.mojang.blaze3d.vertex.DefaultVertexFormat;
-import com.mojang.blaze3d.vertex.Tesselator;
-import com.mojang.blaze3d.vertex.VertexFormat;
+import com.mojang.blaze3d.vertex.*;
 import com.mojang.math.Matrix4f;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GameRenderer;
@@ -79,10 +76,10 @@ public class GlHelper {
     }
 
     public static void drawBlueGradientBackground() {
-        bufferBuilder.vertex(-1, 1, 1f).uv(118f/256f, 8f/256f).color(0xff014e7c).endVertex();
-        bufferBuilder.vertex(1, 1, 1f).uv(118f/256f, 8f/256f).color(0xff0d1033).endVertex();
-        bufferBuilder.vertex(1, -1, 1f).uv(118f/256f, 8f/256f).color(0xff501639).endVertex();
-        bufferBuilder.vertex(-1, -1, 1f).uv(118f/256f, 8f/256f).color(0xff02142a).endVertex();
+        withColor(bufferBuilder.vertex(-1, 1, 1f).uv(118f/256f, 8f/256f), 0xff014e7c).endVertex();
+        withColor(bufferBuilder.vertex(1, 1, 1f).uv(118f/256f, 8f/256f), 0xff0d1033).endVertex();
+        withColor(bufferBuilder.vertex(1, -1, 1f).uv(118f/256f, 8f/256f), 0xff501639).endVertex();
+        withColor(bufferBuilder.vertex(-1, -1, 1f).uv(118f/256f, 8f/256f), 0xff02142a).endVertex();
     }
 
     public static void blit(float x1, float y1, float width, float height, float u1, float v1, float u2, float v2, int color) {
@@ -92,10 +89,10 @@ public class GlHelper {
         float glY1 = -(y1 - getScaledHeight() / 2f) / (getScaledHeight() / 2f);
         float glX2 = (x2 - getScaledWidth() / 2f) / (getScaledWidth() / 2f);
         float glY2 = -(y2 - getScaledHeight() / 2f) / (getScaledHeight() / 2f);
-        bufferBuilder.vertex(glX1, glY1, 1f).uv(u1, v1).color(color).endVertex();
-        bufferBuilder.vertex(glX2, glY1, 1f).uv(u2, v1).color(color).endVertex();
-        bufferBuilder.vertex(glX2, glY2, 1f).uv(u2, v2).color(color).endVertex();
-        bufferBuilder.vertex(glX1, glY2, 1f).uv(u1, v2).color(color).endVertex();
+        withColor(bufferBuilder.vertex(glX1, glY1, 1f).uv(u1, v1), color).endVertex();
+        withColor(bufferBuilder.vertex(glX2, glY1, 1f).uv(u2, v1), color).endVertex();
+        withColor(bufferBuilder.vertex(glX2, glY2, 1f).uv(u2, v2), color).endVertex();
+        withColor(bufferBuilder.vertex(glX1, glY2, 1f).uv(u1, v2), color).endVertex();
     }
 
     public static void blit(float x1, float y1, float width, float height, int color) {
@@ -105,10 +102,10 @@ public class GlHelper {
         float glY1 = -(y1 - getScaledHeight() / 2f) / (getScaledHeight() / 2f);
         float glX2 = (x2 - getScaledWidth() / 2f) / (getScaledWidth() / 2f);
         float glY2 = -(y2 - getScaledHeight() / 2f) / (getScaledHeight() / 2f);
-        bufferBuilder.vertex(glX1, glY1, 1f).uv(118f/256f, 8f/256f).color(color).endVertex();
-        bufferBuilder.vertex(glX2, glY1, 1f).uv(118f/256f, 8f/256f).color(color).endVertex();
-        bufferBuilder.vertex(glX2, glY2, 1f).uv(118f/256f, 8f/256f).color(color).endVertex();
-        bufferBuilder.vertex(glX1, glY2, 1f).uv(118f/256f, 8f/256f).color(color).endVertex();
+        withColor(bufferBuilder.vertex(glX1, glY1, 1f).uv(118f/256f, 8f/256f), color).endVertex();
+        withColor(bufferBuilder.vertex(glX2, glY1, 1f).uv(118f/256f, 8f/256f), color).endVertex();
+        withColor(bufferBuilder.vertex(glX2, glY2, 1f).uv(118f/256f, 8f/256f), color).endVertex();
+        withColor(bufferBuilder.vertex(glX1, glY2, 1f).uv(118f/256f, 8f/256f), color).endVertex();
     }
 
     private static final byte[] GLYPH_SIZES = {
@@ -217,6 +214,14 @@ public class GlHelper {
         int rawWidth = Minecraft.getInstance().getWindow().getWidth();
         int rawHeight = Minecraft.getInstance().getWindow().getHeight();
         return (int)(rawHeight * (getScaledWidth() * 1f / rawWidth));
+    }
+
+    private static VertexConsumer withColor(VertexConsumer vc, int color) {
+        int a = color >>> 24 & 0xFF;
+        int r = color >>> 16 & 0xFF;
+        int g = color >>> 8 & 0xFF;
+        int b = color & 0xFF;
+        return vc.color(r, g, b, a);
     }
 
     public static class MinecraftStoppingException extends IOException {

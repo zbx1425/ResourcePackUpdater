@@ -4,6 +4,7 @@ import cn.zbx1425.resourcepackupdater.drm.ServerLockRegistry;
 import cn.zbx1425.resourcepackupdater.gui.GlHelper;
 import cn.zbx1425.resourcepackupdater.gui.GlProgressScreen;
 import cn.zbx1425.resourcepackupdater.io.Dispatcher;
+import com.google.gson.JsonParser;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.Minecraft;
@@ -29,6 +30,8 @@ public class ResourcePackUpdater implements ModInitializer {
 
     public static final ResourceLocation SERVER_LOCK_PACKET_ID = new ResourceLocation("zbx_rpu", "server_lock");
     public static final ResourceLocation CLIENT_VERSION_PACKET_ID = new ResourceLocation("zbx_rpu", "client_version");
+
+    public static final JsonParser JSON_PARSER = new JsonParser();
 
     @Override
     public void onInitialize() {

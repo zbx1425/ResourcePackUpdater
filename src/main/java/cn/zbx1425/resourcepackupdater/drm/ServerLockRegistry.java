@@ -30,7 +30,7 @@ public class ServerLockRegistry {
             return;
         }
         try {
-            JsonObject metaObj = JsonParser.parseString(IOUtils.toString(
+            JsonObject metaObj = ResourcePackUpdater.JSON_PARSER.parseString(IOUtils.toString(
                     AssetEncryption.wrapInputStream(new FileInputStream(rpFolder.toPath().resolve("pack.mcmeta").toFile()))
                     , StandardCharsets.UTF_8)).getAsJsonObject();
             if (metaObj.has("zbx_rpu_server_lock")) {
