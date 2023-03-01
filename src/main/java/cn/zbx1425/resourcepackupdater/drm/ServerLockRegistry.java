@@ -85,7 +85,7 @@ public class ServerLockRegistry {
         } else {
             ResourcePackUpdater.LOGGER.info("Asset coordination is applicable.");
         }
-        if (localServerLock == null || !Objects.equals(packAppliedServerLock, remoteServerLock)) {
+        if (localServerLock != null && !Objects.equals(packAppliedServerLock, remoteServerLock)) {
             packAppliedServerLock = remoteServerLock;
             Minecraft.getInstance().execute(() -> Minecraft.getInstance().reloadResourcePacks());
         }
