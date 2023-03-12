@@ -52,7 +52,7 @@ public class Config {
             serverLockKey = null;
         }
         clientEnforceInstall = obj.has("clientEnforceInstall") ? obj.get("clientEnforceInstall").getAsBoolean() : null;
-        clientEnforceVersion = obj.has("clientEnforceSameVersion") ? obj.get("clientEnforceSameVersion").getAsString() : null;
+        clientEnforceVersion = obj.has("clientEnforceVersion") ? obj.get("clientEnforceVersion").getAsString() : null;
     }
 
     public void save() throws IOException {
