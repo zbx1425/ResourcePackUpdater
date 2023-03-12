@@ -24,7 +24,7 @@ public class Config {
 
     public String serverLockKey;
     public Boolean clientEnforceInstall;
-    public Boolean clientEnforceSameVersion;
+    public String clientEnforceVersion;
 
     public Config() {
         setDefaults();
@@ -45,14 +45,14 @@ public class Config {
             sourceList.add(new SourceProperty((JsonObject)source));
         }
         pauseWhenSuccess = obj.get("pauseWhenSuccess").getAsBoolean();
-        packBaseDirFile = new File(getPackBaseDir());
+        packBaseDirFile = new File(getPackBaseDir()).getCanonicalFile();
         if (obj.has("serverLockKey")) {
             serverLockKey = obj.get("serverLockKey").getAsString();
         } else {
             serverLockKey = null;
         }
         clientEnforceInstall = obj.has("clientEnforceInstall") ? obj.get("clientEnforceInstall").getAsBoolean() : null;
-        clientEnforceSameVersion = obj.has("clientEnforceSameVersion") ? obj.get("clientEnforceSameVersion").getAsBoolean() : null;
+        clientEnforceVersion = obj.has("clientEnforceSameVersion") ? obj.get("clientEnforceSameVersion").getAsString() : null;
     }
 
     public void save() throws IOException {
@@ -70,7 +70,7 @@ public class Config {
         obj.addProperty("pauseWhenSuccess", pauseWhenSuccess);
         if (serverLockKey != null) obj.addProperty("serverLockKey", serverLockKey);
         if (clientEnforceInstall != null) obj.addProperty("clientEnforceInstall", clientEnforceInstall);
-        if (clientEnforceSameVersion != null) obj.addProperty("clientEnforceSameVersion", clientEnforceSameVersion);
+        if (clientEnforceVersion != null) obj.addProperty("clientEnforceSameVersion", clientEnforceVersion);
         Files.writeString(getConfigFilePath(), new GsonBuilder().setPrettyPrinting().create().toJson(obj));
     }
 
@@ -83,7 +83,7 @@ public class Config {
         packBaseDirFile = new File(getPackBaseDir());
         serverLockKey = null;
         clientEnforceInstall = null;
-        clientEnforceSameVersion = null;
+        clientEnforceVersion = null;
     }
 
     private void addBuiltinSources() {
@@ -102,7 +102,7 @@ public class Config {
 
     public String getPackBaseDir() {
         String sx = FabricLoader.getInstance().getGameDir().toString();
-        String baseDir = Paths.get(sx, "resourcepacks", localPackName).toAbsolutePath().toString();
+        String baseDir = Paths.get(sx, "resourcepacks", localPackName).toAbsolutePath().normalize().toString();
         return baseDir;
     }
 

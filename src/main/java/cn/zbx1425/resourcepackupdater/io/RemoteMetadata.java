@@ -3,6 +3,7 @@ package cn.zbx1425.resourcepackupdater.io;
 import cn.zbx1425.resourcepackupdater.ResourcePackUpdater;
 import cn.zbx1425.resourcepackupdater.drm.AssetEncryption;
 import cn.zbx1425.resourcepackupdater.util.MismatchingVersionException;
+import cn.zbx1425.resourcepackupdater.util.MtrVersion;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.apache.commons.codec.binary.Hex;
@@ -232,7 +233,7 @@ public class RemoteMetadata {
     public void assertMetadataVersion(JsonObject metadataObj) throws MismatchingVersionException {
         if (metadataObj.has("client_version")) {
             String requestedVer = metadataObj.get("client_version").getAsString();
-            if (!requestedVer.equals(ResourcePackUpdater.MOD_VERSION)) {
+            if (!MtrVersion.parse(ResourcePackUpdater.MOD_VERSION).matches(requestedVer)) {
                 throw new MismatchingVersionException(requestedVer, ResourcePackUpdater.MOD_VERSION);
             }
         }

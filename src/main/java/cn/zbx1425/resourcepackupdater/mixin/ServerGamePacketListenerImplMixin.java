@@ -3,6 +3,7 @@ package cn.zbx1425.resourcepackupdater.mixin;
 import cn.zbx1425.resourcepackupdater.ResourcePackUpdater;
 import cn.zbx1425.resourcepackupdater.mappings.Text;
 import cn.zbx1425.resourcepackupdater.util.MismatchingVersionException;
+import cn.zbx1425.resourcepackupdater.util.MtrVersion;
 import cn.zbx1425.resourcepackupdater.util.RPUClientVersionSupplier;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
@@ -31,10 +32,15 @@ public abstract class ServerGamePacketListenerImplMixin {
             // This will arrive before BRAND.
             FriendlyByteBuf friendlyByteBuf = packet.getData();
             String clientVersion = friendlyByteBuf.readUtf();
-            if (clientVersion.equals(ResourcePackUpdater.MOD_VERSION) || !ResourcePackUpdater.CONFIG.clientEnforceSameVersion) {
-                ((RPUClientVersionSupplier)player).setRPUClientVersion(clientVersion);
+            if (ResourcePackUpdater.CONFIG.clientEnforceVersion != null) {
+                String versionCriteria = ResourcePackUpdater.CONFIG.clientEnforceVersion.replace("current", ResourcePackUpdater.MOD_VERSION);
+                if (MtrVersion.parse(clientVersion).matches(versionCriteria)) {
+                    ((RPUClientVersionSupplier)player).setRPUClientVersion(clientVersion);
+                } else {
+                    disconnect(Text.literal(new MismatchingVersionException(ResourcePackUpdater.MOD_VERSION, clientVersion).getMessage().trim()));
+                }
             } else {
-                disconnect(Text.literal(new MismatchingVersionException(ResourcePackUpdater.MOD_VERSION, clientVersion).getMessage().trim()));
+                ((RPUClientVersionSupplier)player).setRPUClientVersion(clientVersion);
             }
             ci.cancel();
         } else if (identifier.equals(ClientboundCustomPayloadPacket.BRAND)) {

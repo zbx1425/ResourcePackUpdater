@@ -26,6 +26,19 @@ import java.util.function.Predicate;
 @Mixin(FolderPackResources.class)
 public abstract class FolderPackResourcesMixin extends AbstractPackResources {
 
+    private File canonicalFile;
+
+    private File getCanonicalFile() {
+        if (canonicalFile == null) {
+            try {
+                canonicalFile = file.getCanonicalFile();
+            } catch (IOException e) {
+                canonicalFile = file;
+            }
+        }
+        return canonicalFile;
+    }
+
     private FolderPackResourcesMixin(File file) { super(file); }
 
     @Shadow
@@ -33,7 +46,7 @@ public abstract class FolderPackResourcesMixin extends AbstractPackResources {
 
     @Inject(method = "getResource", at = @At("HEAD"), cancellable = true)
     void getResource(String resourcePath, CallbackInfoReturnable<InputStream> cir) throws IOException {
-        if (file.equals(ResourcePackUpdater.CONFIG.packBaseDirFile)) {
+        if (getCanonicalFile().equals(ResourcePackUpdater.CONFIG.packBaseDirFile)) {
             File file = this.getFile(resourcePath);
             if (file == null || ServerLockRegistry.shouldRefuseProvidingFile(resourcePath)) {
                 throw new ResourcePackFileNotFoundException(this.file, resourcePath);
@@ -46,7 +59,7 @@ public abstract class FolderPackResourcesMixin extends AbstractPackResources {
 
     @Inject(method = "hasResource", at = @At("HEAD"), cancellable = true)
     void hasResource(String resourcePath, CallbackInfoReturnable<Boolean> cir) {
-        if (file.equals(ResourcePackUpdater.CONFIG.packBaseDirFile)) {
+        if (getCanonicalFile().equals(ResourcePackUpdater.CONFIG.packBaseDirFile)) {
             if (ServerLockRegistry.shouldRefuseProvidingFile(resourcePath)) {
                 cir.setReturnValue(false); cir.cancel();
             }
@@ -58,7 +71,7 @@ public abstract class FolderPackResourcesMixin extends AbstractPackResources {
 #else
     void getResources(PackType type, String namespace, String path, int maxDepth, Predicate<ResourceLocation> filter, CallbackInfoReturnable<Collection<ResourceLocation>> cir) {
 #endif
-        if (file.equals(ResourcePackUpdater.CONFIG.packBaseDirFile)) {
+        if (getCanonicalFile().equals(ResourcePackUpdater.CONFIG.packBaseDirFile)) {
             if (ServerLockRegistry.shouldRefuseProvidingFile(null)) {
                 cir.setReturnValue(Collections.emptyList()); cir.cancel();
             }
@@ -66,7 +79,7 @@ public abstract class FolderPackResourcesMixin extends AbstractPackResources {
     }
     @Inject(method = "getNamespaces", at = @At("HEAD"), cancellable = true)
     void getNamespaces(PackType type, CallbackInfoReturnable<Set<String>> cir) {
-        if (file.equals(ResourcePackUpdater.CONFIG.packBaseDirFile)) {
+        if (getCanonicalFile().equals(ResourcePackUpdater.CONFIG.packBaseDirFile)) {
             if (ServerLockRegistry.shouldRefuseProvidingFile(null)) {
                 cir.setReturnValue(Collections.emptySet()); cir.cancel();
             }
