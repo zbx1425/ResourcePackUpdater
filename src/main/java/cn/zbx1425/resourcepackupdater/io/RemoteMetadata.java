@@ -152,10 +152,19 @@ public class RemoteMetadata {
                 downloadedBytes * 1f / 1024 / 1024, elapsedTimeSecs / 60, elapsedTimeSecs % 60, speedKibPS));
     }
 
-    private static final HttpClient httpClient = HttpClient.newBuilder()
-            .followRedirects(HttpClient.Redirect.NORMAL)
-            .connectTimeout(Duration.ofSeconds(10))
-            .build();
+    private static final HttpClient httpClient;
+
+    static {
+        // PREVENTS HOST VALIDATION
+        final Properties props = System.getProperties();
+        props.setProperty("jdk.internal.httpclient.disableHostnameVerification", Boolean.TRUE.toString());
+
+        httpClient = HttpClient.newBuilder()
+                .followRedirects(HttpClient.Redirect.NORMAL)
+                .connectTimeout(Duration.ofSeconds(10))
+                .sslContext(DummyTrustManager.UNSAFE_CONTEXT)
+                .build();
+    }
 
     private void urlToStream(URL url, long expectedSize, OutputStream target, ProgressReceiver cb) throws IOException {
         URI requestUri;
