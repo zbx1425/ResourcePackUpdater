@@ -76,7 +76,15 @@ public class Config {
 
     public void setDefaults() {
         addBuiltinSources();
-        activeSource = sourceList.get(0);
+        if (sourceList.size() == 0) {
+            activeSource = new SourceProperty(
+                "NOT CONFIGURED",
+                "",
+                false, false, true
+            );
+        } else {
+            activeSource = sourceList.get(0);
+        }
         localPackName = "SyncedPack";
         disableBuiltinSources = false;
         pauseWhenSuccess = false;
@@ -88,14 +96,14 @@ public class Config {
 
     private void addBuiltinSources() {
         sourceList.clear();
-        sourceList.add(new SourceProperty(
-            "MTR Let's Play (HK, Primary)",
-           "https://mc.zbx1425.cn/jlp-srp", true, true, true
-        ));
         /*
         sourceList.add(new SourceProperty(
+            "MTR Let's Play (HK, Primary)",
+            "https://mc.zbx1425.cn/jlp-srp", true, true, true
+        ));
+        sourceList.add(new SourceProperty(
             "MTR Let's Play (CN, Mirror)",
-        "https://seu.complexstudio.net/jlp-srp", true, false, true
+            "https://seu.complexstudio.net/jlp-srp", true, false, true
         ));
         */
     }

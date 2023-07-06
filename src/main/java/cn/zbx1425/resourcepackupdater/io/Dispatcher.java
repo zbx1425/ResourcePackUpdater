@@ -6,6 +6,7 @@ import cn.zbx1425.resourcepackupdater.gui.GlHelper;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.io.FileUtils;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -19,6 +20,10 @@ public class Dispatcher {
 
     public boolean runSync(String baseDir, Config.SourceProperty source, ProgressReceiver cb) throws Exception {
         try {
+            if (source.baseUrl.isEmpty()) {
+                throw new IOException("There is no source configured. Install the config file to your config folder!");
+            }
+
             cb.printLog("Resource Pack Updater v" + ResourcePackUpdater.MOD_VERSION + " © Zbx1425, www.zbx1425.cn");
             cb.printLog("Server: " + source.baseUrl);
             cb.printLog("Target: " + baseDir);

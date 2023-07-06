@@ -62,7 +62,9 @@ public class GlProgressScreen implements ProgressReceiver {
         this.exception = exception;
         this.paused = true;
         ResourcePackUpdater.LOGGER.error(exception);
-        redrawScreen(true);
+        for (String line : exception.toString().split("\n")) {
+            printLog(line);
+        }
     }
 
     public boolean pause(boolean swap) throws GlHelper.MinecraftStoppingException {
@@ -141,15 +143,6 @@ public class GlProgressScreen implements ProgressReceiver {
             GlHelper.blit(barBegin, 60 + LINE_HEIGHT + 3, GlHelper.getScaledWidth() - barBegin - 40, LINE_HEIGHT - 6, 0xFF666666);
             GlHelper.blit(barBegin + 3, 60 + LINE_HEIGHT + 6, GlHelper.getScaledWidth() - barBegin - 46, LINE_HEIGHT - 12, 0xFF222222);
             GlHelper.blit(barBegin + 5, 60 + LINE_HEIGHT + 8, usableBarWidth * secondaryProgress, LINE_HEIGHT - 16, 0xff27a2fd);
-
-            final int LOG_FONT_SIZE = 16;
-            final int LOG_LINE_HEIGHT = 20;
-            float logBegin = 60 + LOG_LINE_HEIGHT * 3 + 40;
-            float usableLogHeight = GlHelper.getScaledHeight() - logBegin - 20;
-            for (int i = logViewOffset; i < logs.size(); i++) {
-                GlHelper.drawShadowString(20, logBegin + LOG_LINE_HEIGHT * (i - logViewOffset), GlHelper.getScaledWidth() - 40, usableLogHeight, LOG_FONT_SIZE,
-                        logs.get(i), 0xFFDDDDDD, false, true);
-            }
         } else {
             GlHelper.drawShadowString(20, 60, GlHelper.getScaledWidth() - 40, LINE_HEIGHT, FONT_SIZE,
                     "There was an error!",
@@ -166,10 +159,15 @@ public class GlProgressScreen implements ProgressReceiver {
                         primaryInfo,
                         0xffdddddd, true, true);
             }
-            final int LOG_FONT_SIZE = 16;
-            GlHelper.drawShadowString(20, 60 + LINE_HEIGHT * 2 + 10, GlHelper.getScaledWidth() - 40,  GlHelper.getScaledHeight() - 100 - 10, LOG_FONT_SIZE,
-                    Throwables.getStackTraceAsString(exception),
-                    0xFFDDDDDD, false, false);
+        }
+
+        final int LOG_FONT_SIZE = 16;
+        final int LOG_LINE_HEIGHT = 20;
+        float logBegin = 60 + LOG_LINE_HEIGHT * 3 + 40;
+        float usableLogHeight = GlHelper.getScaledHeight() - logBegin - 20;
+        for (int i = logViewOffset; i < logs.size(); i++) {
+            GlHelper.drawShadowString(20, logBegin + LOG_LINE_HEIGHT * (i - logViewOffset), GlHelper.getScaledWidth() - 40, usableLogHeight, LOG_FONT_SIZE,
+                    logs.get(i), 0xFFDDDDDD, false, true);
         }
         GlHelper.end();
 
