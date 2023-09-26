@@ -13,6 +13,9 @@ public class SelectSourceForm implements GlScreenForm {
 
     int selectedIndex = -1;
 
+    long countdownStartTime = -1;
+    boolean countdownExpired = false;
+
     @Override
     public void render() {
         int sourceSize = ResourcePackUpdater.CONFIG.sourceList.value.size();
@@ -25,8 +28,18 @@ public class SelectSourceForm implements GlScreenForm {
         GlHelper.begin(GlHelper.PRELOAD_FONT_TEXTURE);
         GlScreenForm.drawShadowRect(selectSourceFormWidth, selectSourceFormHeight, 0xffdee6ea);
 
-        GlHelper.drawString(30, 30, selectSourceFormWidth - 60, 30, 20,
-                "Select Source", 0xff222222, false, false);
+        if (countdownStartTime > 0) {
+            long countdown = ResourcePackUpdater.CONFIG.sourceSelectDelay.value - (System.currentTimeMillis() - countdownStartTime) / 1000;
+            if (countdown > 0) {
+                GlHelper.drawString(30, 30, selectSourceFormWidth - 60, 30, 20,
+                        String.format("Select Source (%d)", countdown), 0xff222222, false, false);
+            } else {
+                countdownExpired = true;
+            }
+        } else {
+            GlHelper.drawString(30, 30, selectSourceFormWidth - 60, 30, 20,
+                    "Select Source", 0xff222222, false, false);
+        }
         for (int i = 0; i < sourceSize; i++) {
             if (i == selectedIndex) {
                 GlHelper.blit(30, 30 + 30 + i * 50, selectSourceFormWidth - 60, 40, 0xff63a0c6);
@@ -49,21 +62,24 @@ public class SelectSourceForm implements GlScreenForm {
             if (heldKey != InputConstants.KEY_UP) {
                 selectedIndex = Math.max(0, selectedIndex - 1);
                 heldKey = InputConstants.KEY_UP;
+                countdownStartTime = -1;
             }
         } else if (InputConstants.isKeyDown(glfwWindow, InputConstants.KEY_DOWN)) {
             if (heldKey != InputConstants.KEY_DOWN) {
                 selectedIndex = Math.min(ResourcePackUpdater.CONFIG.sourceList.value.size() - 1, selectedIndex + 1);
                 heldKey = InputConstants.KEY_DOWN;
+                countdownStartTime = -1;
             }
-        } else if (InputConstants.isKeyDown(glfwWindow, InputConstants.KEY_RETURN)) {
-            if (heldKey != InputConstants.KEY_RETURN) {
-                ResourcePackUpdater.CONFIG.activeSource.value = ResourcePackUpdater.CONFIG.sourceList.value.get(selectedIndex);
-                ResourcePackUpdater.CONFIG.activeSource.isFromLocal = true;
-                try {
-                    ResourcePackUpdater.CONFIG.save();
-                } catch (IOException ignored) { }
-                return true;
-            }
+        } else if (InputConstants.isKeyDown(glfwWindow, InputConstants.KEY_RETURN)
+            || InputConstants.isKeyDown(glfwWindow, InputConstants.KEY_SPACE)
+            || InputConstants.isKeyDown(glfwWindow, InputConstants.KEY_RIGHT)
+            || countdownExpired) {
+            ResourcePackUpdater.CONFIG.activeSource.value = ResourcePackUpdater.CONFIG.sourceList.value.get(selectedIndex);
+            ResourcePackUpdater.CONFIG.activeSource.isFromLocal = true;
+            try {
+                ResourcePackUpdater.CONFIG.save();
+            } catch (IOException ignored) { }
+            return true;
         } else if (InputConstants.isKeyDown(glfwWindow, InputConstants.KEY_ESCAPE)) {
             return true;
         } else {
@@ -76,6 +92,12 @@ public class SelectSourceForm implements GlScreenForm {
     public void reset() {
         selectedIndex = -1;
         heldKey = -1;
+        if (ResourcePackUpdater.CONFIG.sourceSelectDelay.value > 0) {
+            countdownStartTime = System.currentTimeMillis();
+        } else {
+            countdownStartTime = -1;
+        }
+        countdownExpired = false;
     }
 
     @Override

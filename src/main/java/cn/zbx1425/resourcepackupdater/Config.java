@@ -7,7 +7,6 @@ import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URI;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
@@ -17,7 +16,6 @@ import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -45,17 +43,19 @@ public class Config {
         },
         new ArrayList<>()
     );
-    public final ConfigItem<SourceProperty> activeSource = new ConfigItem<>(
-        "activeSource", (json) -> new SourceProperty((JsonObject)json), SourceProperty::toJson, null);
+    public final ConfigItem<SourceProperty> activeSource = new ConfigItem<SourceProperty>(
+        "activeSource", (json) -> new SourceProperty((JsonObject)json), SourceProperty::toJson, () -> null);
     public final ConfigItem<String> localPackName = new ConfigItem<>(
         "localPackName", JsonElement::getAsString, JsonPrimitive::new, "SyncedPack");
     public final ConfigItem<Boolean> disableBuiltinSources = new ConfigItem<>(
         "disableBuiltinSources", JsonElement::getAsBoolean, JsonPrimitive::new, false);
+    public final ConfigItem<Integer> sourceSelectDelay = new ConfigItem<>(
+            "sourceSelectDelay", JsonElement::getAsInt, JsonPrimitive::new, 8);
     public final ConfigItem<Boolean> pauseWhenSuccess = new ConfigItem<>(
         "pauseWhenSuccess", JsonElement::getAsBoolean, JsonPrimitive::new, false);
-    public final ConfigItem<File> packBaseDirFile = new ConfigItem<>(
+    public final ConfigItem<File> packBaseDirFile = new ConfigItem<File>(
         "packBaseDirFile", (json) -> new File(json.getAsString()),
-            (value) -> new JsonPrimitive(value.toString()), new File(getPackBaseDir()));
+            (value) -> new JsonPrimitive(value.toString()), () -> new File(getPackBaseDir()));
 
     public final ConfigItem<String> serverLockKey = new ConfigItem<>(
         "serverLockKey", JsonElement::getAsString, JsonPrimitive::new, "");
@@ -64,9 +64,9 @@ public class Config {
     public final ConfigItem<String> clientEnforceVersion = new ConfigItem<>(
         "clientEnforceVersion", JsonElement::getAsString, JsonPrimitive::new, "");
 
-    public List<ConfigItem> configItems = List.of(
-        sourceList, activeSource, localPackName, disableBuiltinSources, pauseWhenSuccess, packBaseDirFile,
-        serverLockKey, clientEnforceInstall, clientEnforceVersion
+    public List<ConfigItem<?>> configItems = List.of(
+        sourceList, activeSource, localPackName, disableBuiltinSources, sourceSelectDelay, pauseWhenSuccess,
+        packBaseDirFile, serverLockKey, clientEnforceInstall, clientEnforceVersion
     );
 
     public void load() throws IOException {
@@ -102,7 +102,7 @@ public class Config {
             }
         }
 
-        for (ConfigItem item : configItems) {
+        for (ConfigItem<?> item : configItems) {
             item.load(localConfig, remoteConfig);
         }
 
@@ -130,7 +130,7 @@ public class Config {
         JsonObject obj = new JsonObject();
         obj.addProperty("version", 2);
 
-        for (ConfigItem item : configItems) {
+        for (ConfigItem<?> item : configItems) {
             item.save(obj);
         }
         Files.writeString(getConfigFilePath(), new GsonBuilder().setPrettyPrinting().create().toJson(obj));
@@ -167,13 +167,20 @@ public class Config {
         private final String key;
         private final Function<JsonElement, T> fromCodec;
         private final Function<T, JsonElement> toCodec;
-        private final T defaultValue;
+        private final Supplier<T> defaultSupplier;
 
         public ConfigItem(String key, Function<JsonElement, T> fromCodec, Function<T, JsonElement> toCodec, T defaultValue) {
             this.key = key;
             this.fromCodec = fromCodec;
             this.toCodec = toCodec;
-            this.defaultValue = defaultValue;
+            this.defaultSupplier = () -> defaultValue;
+        }
+
+        public ConfigItem(String key, Function<JsonElement, T> fromCodec, Function<T, JsonElement> toCodec, Supplier<T> defaultSupplier) {
+            this.key = key;
+            this.fromCodec = fromCodec;
+            this.toCodec = toCodec;
+            this.defaultSupplier = defaultSupplier;
         }
 
         public void load(JsonObject localObject, JsonObject remoteObject) {
@@ -184,7 +191,7 @@ public class Config {
                 value = fromCodec.apply(remoteObject.get(key));
                 isFromLocal = false;
             } else {
-                value = defaultValue;
+                value = defaultSupplier.get();
                 isFromLocal = false;
             }
         }
