@@ -7,101 +7,142 @@ import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 public class Config {
 
-    public final List<SourceProperty> sourceList = new ArrayList<>();
-    public SourceProperty activeSource;
-    public String localPackName;
-    public boolean disableBuiltinSources;
-    public boolean pauseWhenSuccess;
-    public File packBaseDirFile;
+    public final ConfigItem<String> remoteConfigUrl = new ConfigItem<>(
+            "remoteConfigUrl", JsonElement::getAsString, JsonPrimitive::new, "");
 
-    public String serverLockKey;
-    public Boolean clientEnforceInstall;
-    public String clientEnforceVersion;
+    public final ConfigItem<List<SourceProperty>> sourceList = new ConfigItem<>(
+        "sources",
+        (json) -> {
+            List<SourceProperty> list = new ArrayList<>();
+            for (JsonElement source : json.getAsJsonArray()) {
+                list.add(new SourceProperty((JsonObject)source));
+            }
+            return list;
+        },
+        (value) -> {
+            JsonArray array = new JsonArray();
+            for (SourceProperty source : value) {
+                if (source.isBuiltin) continue;
+                array.add(source.toJson());
+            }
+            return array;
+        },
+        new ArrayList<>()
+    );
+    public final ConfigItem<SourceProperty> activeSource = new ConfigItem<>(
+        "activeSource", (json) -> new SourceProperty((JsonObject)json), SourceProperty::toJson, null);
+    public final ConfigItem<String> localPackName = new ConfigItem<>(
+        "localPackName", JsonElement::getAsString, JsonPrimitive::new, "SyncedPack");
+    public final ConfigItem<Boolean> disableBuiltinSources = new ConfigItem<>(
+        "disableBuiltinSources", JsonElement::getAsBoolean, JsonPrimitive::new, false);
+    public final ConfigItem<Boolean> pauseWhenSuccess = new ConfigItem<>(
+        "pauseWhenSuccess", JsonElement::getAsBoolean, JsonPrimitive::new, false);
+    public final ConfigItem<File> packBaseDirFile = new ConfigItem<>(
+        "packBaseDirFile", (json) -> new File(json.getAsString()),
+            (value) -> new JsonPrimitive(value.toString()), new File(getPackBaseDir()));
 
-    public Config() {
-        setDefaults();
-    }
+    public final ConfigItem<String> serverLockKey = new ConfigItem<>(
+        "serverLockKey", JsonElement::getAsString, JsonPrimitive::new, "");
+    public final ConfigItem<Boolean> clientEnforceInstall = new ConfigItem<>(
+        "clientEnforceInstall", JsonElement::getAsBoolean, JsonPrimitive::new, false);
+    public final ConfigItem<String> clientEnforceVersion = new ConfigItem<>(
+        "clientEnforceVersion", JsonElement::getAsString, JsonPrimitive::new, "");
+
+    public List<ConfigItem> configItems = List.of(
+        sourceList, activeSource, localPackName, disableBuiltinSources, pauseWhenSuccess, packBaseDirFile,
+        serverLockKey, clientEnforceInstall, clientEnforceVersion
+    );
 
     public void load() throws IOException {
-        setDefaults();
         if (!Files.isRegularFile(getConfigFilePath())) {
             save();
         }
-        JsonObject obj = (JsonObject)ResourcePackUpdater.JSON_PARSER.parse(Files.readString(getConfigFilePath()));
-        localPackName = obj.get("localPackName").getAsString();
-        activeSource = new SourceProperty(obj.get("activeSource").getAsJsonObject());
-        if (obj.get("disableBuiltinSources").getAsBoolean()) {
-            sourceList.clear();
-        }
-        for (JsonElement source : obj.get("sources").getAsJsonArray()) {
-            sourceList.add(new SourceProperty((JsonObject)source));
-        }
-        pauseWhenSuccess = obj.get("pauseWhenSuccess").getAsBoolean();
-        packBaseDirFile = new File(getPackBaseDir()).getCanonicalFile();
-        if (obj.has("serverLockKey")) {
-            serverLockKey = obj.get("serverLockKey").getAsString();
+
+        JsonObject localConfig = (JsonObject)ResourcePackUpdater.JSON_PARSER.parse(Files.readString(getConfigFilePath()));
+        remoteConfigUrl.load(localConfig, new JsonObject());
+        JsonObject remoteConfig;
+        if (remoteConfigUrl.value.isEmpty()) {
+            remoteConfig = new JsonObject();
         } else {
-            serverLockKey = null;
+            try {
+                HttpRequest httpRequest = HttpRequest.newBuilder(new URI(remoteConfigUrl.value))
+                        .timeout(Duration.ofSeconds(10))
+                        .setHeader("User-Agent", "ResourcePackUpdater/" + ResourcePackUpdater.MOD_VERSION + " +https://www.zbx1425.cn")
+                        .setHeader("Accept-Encoding", "gzip")
+                        .GET()
+                        .build();
+                HttpResponse<String> httpResponse;
+                try {
+                    httpResponse = ResourcePackUpdater.HTTP_CLIENT.send(httpRequest, HttpResponse.BodyHandlers.ofString());
+                } catch (InterruptedException ex) {
+                    throw new IOException(ex);
+                }
+                if (httpResponse.statusCode() != 200) {
+                    throw new IOException("HTTP " + httpResponse.statusCode() + " " + httpResponse.body());
+                }
+                remoteConfig = (JsonObject) ResourcePackUpdater.JSON_PARSER.parse(httpResponse.body());
+            } catch (Exception ex) {
+                throw new IOException(ex);
+            }
         }
-        clientEnforceInstall = obj.has("clientEnforceInstall") ? obj.get("clientEnforceInstall").getAsBoolean() : null;
-        clientEnforceVersion = obj.has("clientEnforceVersion") ? obj.get("clientEnforceVersion").getAsString() : null;
+
+        for (ConfigItem item : configItems) {
+            item.load(localConfig, remoteConfig);
+        }
+
+        if (remoteConfigUrl.isFromLocal && remoteConfig.has("remoteConfigUrl")
+            && !remoteConfig.get("remoteConfigUrl").getAsString().equals(remoteConfigUrl.value)) {
+            remoteConfigUrl.load(remoteConfig, remoteConfig);
+            save();
+        }
+
+        if (!disableBuiltinSources.value) addBuiltinSources();
+        if (activeSource.value == null) {
+            if (sourceList.value.isEmpty()) {
+                activeSource.value = new SourceProperty(
+                        "NOT CONFIGURED",
+                        "",
+                        false, false, true
+                );
+            } else {
+                activeSource.value = sourceList.value.get(0);
+            }
+        }
     }
 
     public void save() throws IOException {
         JsonObject obj = new JsonObject();
         obj.addProperty("version", 2);
-        obj.addProperty("localPackName", localPackName);
-        obj.add("activeSource", activeSource.toJson());
-        obj.addProperty("disableBuiltinSources", disableBuiltinSources);
-        JsonArray customSources = new JsonArray();
-        for (SourceProperty source : sourceList) {
-            if (source.isBuiltin) continue;
-            customSources.add(source.toJson());
+
+        for (ConfigItem item : configItems) {
+            item.save(obj);
         }
-        obj.add("sources", customSources);
-        obj.addProperty("pauseWhenSuccess", pauseWhenSuccess);
-        if (serverLockKey != null) obj.addProperty("serverLockKey", serverLockKey);
-        if (clientEnforceInstall != null) obj.addProperty("clientEnforceInstall", clientEnforceInstall);
-        if (clientEnforceVersion != null) obj.addProperty("clientEnforceSameVersion", clientEnforceVersion);
         Files.writeString(getConfigFilePath(), new GsonBuilder().setPrettyPrinting().create().toJson(obj));
     }
 
-    public void setDefaults() {
-        addBuiltinSources();
-        if (sourceList.size() == 0) {
-            activeSource = new SourceProperty(
-                "NOT CONFIGURED",
-                "",
-                false, false, true
-            );
-        } else {
-            activeSource = sourceList.get(0);
-        }
-        localPackName = "SyncedPack";
-        disableBuiltinSources = false;
-        pauseWhenSuccess = false;
-        packBaseDirFile = new File(getPackBaseDir());
-        serverLockKey = null;
-        clientEnforceInstall = null;
-        clientEnforceVersion = null;
-    }
-
     private void addBuiltinSources() {
-        sourceList.clear();
         /*
-        sourceList.add(new SourceProperty(
+        sourceList.value.add(0, new SourceProperty(
             "MTR Let's Play (HK, Primary)",
             "https://mc.zbx1425.cn/jlp-srp", true, true, true
         ));
-        sourceList.add(new SourceProperty(
+        sourceList.value.add(0, new SourceProperty(
             "MTR Let's Play (CN, Mirror)",
             "https://seu.complexstudio.net/jlp-srp", true, false, true
         ));
@@ -110,12 +151,49 @@ public class Config {
 
     public String getPackBaseDir() {
         String sx = FabricLoader.getInstance().getGameDir().toString();
-        String baseDir = Paths.get(sx, "resourcepacks", localPackName).toAbsolutePath().normalize().toString();
-        return baseDir;
+        return Paths.get(sx, "resourcepacks", localPackName.value).toAbsolutePath().normalize().toString();
     }
 
     public Path getConfigFilePath() {
         return FabricLoader.getInstance().getConfigDir().resolve(ResourcePackUpdater.MOD_ID + ".json");
+    }
+
+
+    public static class ConfigItem<T> {
+
+        public T value;
+        public boolean isFromLocal;
+
+        private final String key;
+        private final Function<JsonElement, T> fromCodec;
+        private final Function<T, JsonElement> toCodec;
+        private final T defaultValue;
+
+        public ConfigItem(String key, Function<JsonElement, T> fromCodec, Function<T, JsonElement> toCodec, T defaultValue) {
+            this.key = key;
+            this.fromCodec = fromCodec;
+            this.toCodec = toCodec;
+            this.defaultValue = defaultValue;
+        }
+
+        public void load(JsonObject localObject, JsonObject remoteObject) {
+            if (localObject.has(key)) {
+                value = fromCodec.apply(localObject.get(key));
+                isFromLocal = true;
+            } else if (remoteObject.has(key)) {
+                value = fromCodec.apply(remoteObject.get(key));
+                isFromLocal = false;
+            } else {
+                value = defaultValue;
+                isFromLocal = false;
+            }
+        }
+
+        public void save(JsonObject jsonObject) {
+            if (isFromLocal && value != null) {
+                jsonObject.add(key, toCodec.apply(value));
+            }
+        }
     }
 
     public static class SourceProperty {

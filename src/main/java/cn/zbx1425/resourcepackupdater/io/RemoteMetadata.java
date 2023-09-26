@@ -13,6 +13,7 @@ import org.apache.http.client.utils.URIBuilder;
 
 import java.io.*;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -152,22 +153,14 @@ public class RemoteMetadata {
                 downloadedBytes * 1f / 1024 / 1024, elapsedTimeSecs / 60, elapsedTimeSecs % 60, speedKibPS));
     }
 
-    private static final HttpClient httpClient;
-
-    static {
-        // PREVENTS HOST VALIDATION
-        final Properties props = System.getProperties();
-        props.setProperty("jdk.internal.httpclient.disableHostnameVerification", Boolean.TRUE.toString());
-
-        httpClient = HttpClient.newBuilder()
-                .followRedirects(HttpClient.Redirect.NORMAL)
-                .connectTimeout(Duration.ofSeconds(10))
-                .sslContext(DummyTrustManager.UNSAFE_CONTEXT)
-                .build();
-    }
-
     private void urlToStream(URL url, long expectedSize, OutputStream target, ProgressReceiver cb) throws IOException {
         URI requestUri;
+        try {
+            requestUri = url.toURI();
+        } catch (URISyntaxException e) {
+            throw new IOException(e);
+        }
+        /*
         try {
             MessageDigest md5 = MessageDigest.getInstance("MD5");
             byte[] digest = md5.digest((url.getPath() + "?REALLY-BAD-VALIDATION-IDEA")
@@ -177,6 +170,7 @@ public class RemoteMetadata {
         } catch (Exception ex) {
             throw new IOException(ex);
         }
+         */
 
         HttpRequest httpRequest = HttpRequest.newBuilder(requestUri)
                 .timeout(Duration.ofSeconds(10))
@@ -186,7 +180,7 @@ public class RemoteMetadata {
                 .build();
         HttpResponse<InputStream> httpResponse;
         try {
-            httpResponse = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofInputStream());
+            httpResponse = ResourcePackUpdater.HTTP_CLIENT.send(httpRequest, HttpResponse.BodyHandlers.ofInputStream());
         } catch (InterruptedException ex) {
             throw new IOException(ex);
         }
@@ -206,11 +200,11 @@ public class RemoteMetadata {
                             downloadedBytes += (amountOfBytesWritten - lastAmount);
                             long elapsedTimeSecs = (System.currentTimeMillis() - downloadStartTime) / 1000;
                             if (fileSize > 0) {
-                                String message = String.format(": %6d KiB / %6d KiB; %6d KiB/s overall",
+                                String message = String.format(": %5d KiB / %5d KiB; %5d KiB/s",
                                         amountOfBytesWritten / 1024, fileSize / 1024, elapsedTimeSecs == 0 ? 0 : downloadedBytes / elapsedTimeSecs / 1024);
                                 cb.setSecondaryProgress(amountOfBytesWritten * 1f / fileSize, message);
                             } else {
-                                String message = String.format(": %6d KiB downloaded; %6d KiB/s overall",
+                                String message = String.format(": %5d KiB downloaded; %5d KiB/s",
                                         amountOfBytesWritten / 1024, elapsedTimeSecs == 0 ? 0 : downloadedBytes / elapsedTimeSecs / 1024);
                                 cb.setSecondaryProgress(((System.currentTimeMillis() - downloadStartTime) / 1000f) % 1f, message);
                             }

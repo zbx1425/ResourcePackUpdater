@@ -32,8 +32,8 @@ public abstract class ServerGamePacketListenerImplMixin {
             // This will arrive before BRAND.
             FriendlyByteBuf friendlyByteBuf = packet.getData();
             String clientVersion = friendlyByteBuf.readUtf();
-            if (ResourcePackUpdater.CONFIG.clientEnforceVersion != null) {
-                String versionCriteria = ResourcePackUpdater.CONFIG.clientEnforceVersion.replace("current", ResourcePackUpdater.MOD_VERSION);
+            if (!ResourcePackUpdater.CONFIG.clientEnforceVersion.value.isEmpty()) {
+                String versionCriteria = ResourcePackUpdater.CONFIG.clientEnforceVersion.value.replace("current", ResourcePackUpdater.MOD_VERSION);
                 if (MtrVersion.parse(clientVersion).matches(versionCriteria)) {
                     ((RPUClientVersionSupplier)player).setRPUClientVersion(clientVersion);
                 } else {
@@ -44,7 +44,7 @@ public abstract class ServerGamePacketListenerImplMixin {
             }
             ci.cancel();
         } else if (identifier.equals(ClientboundCustomPayloadPacket.BRAND)) {
-            if (((RPUClientVersionSupplier)player).getRPUClientVersion() == null && ResourcePackUpdater.CONFIG.clientEnforceInstall) {
+            if (((RPUClientVersionSupplier)player).getRPUClientVersion() == null && ResourcePackUpdater.CONFIG.clientEnforceInstall.value) {
                 disconnect(Text.literal(new MismatchingVersionException(ResourcePackUpdater.MOD_VERSION, "N/A").getMessage().trim()));
                 ci.cancel();
             }

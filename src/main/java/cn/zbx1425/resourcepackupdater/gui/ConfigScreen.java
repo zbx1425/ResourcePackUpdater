@@ -7,7 +7,6 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -45,9 +44,9 @@ public class ConfigScreen extends Screen {
         addRenderableWidget(btnReturn);
 
         int btnY = 90;
-        for (Config.SourceProperty source : ResourcePackUpdater.CONFIG.sourceList) {
+        for (Config.SourceProperty source : ResourcePackUpdater.CONFIG.sourceList.value) {
             Button btnUseSource = new Button(PADDING + PADDING, btnY, btnWidthInner, 20, Text.translatable(source.name), (btn) -> {
-                ResourcePackUpdater.CONFIG.activeSource = source;
+                ResourcePackUpdater.CONFIG.activeSource.value = source;
                 try {
                     ResourcePackUpdater.CONFIG.save();
                 } catch (IOException e) {
@@ -73,7 +72,7 @@ public class ConfigScreen extends Screen {
         if (isShowingLog) {
             GlHelper.initGlStates();
             try {
-                if (!ResourcePackUpdater.GL_PROGRESS_SCREEN.pause(false)) {
+                if (!ResourcePackUpdater.GL_PROGRESS_SCREEN.shouldContinuePausing(false)) {
                     isShowingLog = false;
                 }
             } catch (GlHelper.MinecraftStoppingException ignored) {
@@ -83,7 +82,7 @@ public class ConfigScreen extends Screen {
         } else {
             this.fillGradient(matrices, 0, 0, this.width, this.height, 0xff014e7c, 0xff02142a);
             RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
-            RenderSystem.setShaderTexture(0, GlHelper.PRELOAD_HEADER_TEXTURE);
+            RenderSystem.setShaderTexture(0, GlProgressScreen.PRELOAD_HEADER_TEXTURE);
             blit(matrices, 10, 10, 256, 16, 0, 0, 512, 32, 512, 32);
             this.font.drawShadow(matrices, "Source Servers:", 20, 76, 0xFFFFFFFF);
             this.font.drawShadow(matrices, "https://www.zbx1425.cn", 20, height - 40, 0xFFFFFFFF);

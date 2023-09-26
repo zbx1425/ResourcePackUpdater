@@ -4,6 +4,7 @@ import cn.zbx1425.resourcepackupdater.drm.ServerLockRegistry;
 import cn.zbx1425.resourcepackupdater.gui.GlHelper;
 import cn.zbx1425.resourcepackupdater.gui.GlProgressScreen;
 import cn.zbx1425.resourcepackupdater.io.Dispatcher;
+import cn.zbx1425.resourcepackupdater.io.DummyTrustManager;
 import com.google.gson.JsonParser;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.loader.api.FabricLoader;
@@ -15,6 +16,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
+import java.net.http.HttpClient;
+import java.time.Duration;
+import java.util.Properties;
 
 public class ResourcePackUpdater implements ModInitializer {
 
@@ -32,6 +36,19 @@ public class ResourcePackUpdater implements ModInitializer {
     public static final ResourceLocation CLIENT_VERSION_PACKET_ID = new ResourceLocation("zbx_rpu", "client_version");
 
     public static final JsonParser JSON_PARSER = new JsonParser();
+    public static final HttpClient HTTP_CLIENT;
+
+    static {
+        // PREVENTS HOST VALIDATION
+        final Properties props = System.getProperties();
+        props.setProperty("jdk.internal.httpclient.disableHostnameVerification", Boolean.TRUE.toString());
+
+        HTTP_CLIENT = HttpClient.newBuilder()
+                .followRedirects(HttpClient.Redirect.NORMAL)
+                .connectTimeout(Duration.ofSeconds(10))
+                .sslContext(DummyTrustManager.UNSAFE_CONTEXT)
+                .build();
+    }
 
     @Override
     public void onInitialize() {
@@ -48,26 +65,33 @@ public class ResourcePackUpdater implements ModInitializer {
         GlHelper.initGlStates();
 
         Dispatcher syncDispatcher = new Dispatcher();
+
+        ResourcePackUpdater.GL_PROGRESS_SCREEN.resetToSelectSource();
+        try {
+            while (ResourcePackUpdater.GL_PROGRESS_SCREEN.shouldContinuePausing(true)) {
+                Thread.sleep(50);
+            }
+        } catch (Exception ignored) { }
+
         ResourcePackUpdater.GL_PROGRESS_SCREEN.reset();
         try {
-            boolean syncSuccess = syncDispatcher.runSync(ResourcePackUpdater.CONFIG.getPackBaseDir(), ResourcePackUpdater.CONFIG.activeSource, ResourcePackUpdater.GL_PROGRESS_SCREEN);
+            boolean syncSuccess = syncDispatcher.runSync(ResourcePackUpdater.CONFIG.getPackBaseDir(),
+                    ResourcePackUpdater.CONFIG.activeSource.value, ResourcePackUpdater.GL_PROGRESS_SCREEN);
             if (syncSuccess) {
                 ServerLockRegistry.lockAllSyncedPacks = false;
             } else {
                 ServerLockRegistry.lockAllSyncedPacks = true;
             }
 
-            if (ResourcePackUpdater.CONFIG.pauseWhenSuccess || ResourcePackUpdater.GL_PROGRESS_SCREEN.hasException()) {
-                while (ResourcePackUpdater.GL_PROGRESS_SCREEN.pause(true)) {
-                    Thread.sleep(50);
-                }
+            while (ResourcePackUpdater.GL_PROGRESS_SCREEN.shouldContinuePausing(true)) {
+                Thread.sleep(50);
             }
 
             Minecraft.getInstance().options.save();
         } catch (Exception ignored) {
             ServerLockRegistry.lockAllSyncedPacks = true;
         }
-        ServerLockRegistry.updateLocalServerLock(ResourcePackUpdater.CONFIG.packBaseDirFile);
+        ServerLockRegistry.updateLocalServerLock(ResourcePackUpdater.CONFIG.packBaseDirFile.value);
         GlHelper.resetGlStates();
     }
 
