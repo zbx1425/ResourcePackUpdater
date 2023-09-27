@@ -47,6 +47,7 @@ public class LocalMetadata {
                 if (Files.isDirectory(entry)) {
                     dirs.add(relPath);
                 } else {
+                    if (entry.getFileName().toString().toLowerCase(Locale.ROOT).equals("desktop.ini")) continue;
                     if (shouldEncrypt) AssetEncryption.encryptIfRaw(entry.toFile());
                     files.put(relPath, hashCache.getDigest(relPath, entry.toFile()));
                 }

@@ -105,7 +105,7 @@ public class ResourcePackUpdater implements ModInitializer {
 
     public static void modifyPackList() {
         Options options = Minecraft.getInstance().options;
-        String expectedEntry = "file/" + ResourcePackUpdater.CONFIG.localPackName;
+        String expectedEntry = "file/" + ResourcePackUpdater.CONFIG.localPackName.value;
         options.resourcePacks.remove(expectedEntry);
         if (!options.resourcePacks.contains("vanilla")) {
             options.resourcePacks.add("vanilla");

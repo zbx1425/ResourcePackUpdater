@@ -1,6 +1,7 @@
 package cn.zbx1425.resourcepackupdater.io;
 
 import cn.zbx1425.resourcepackupdater.drm.AssetEncryption;
+import org.apache.commons.codec.digest.DigestUtils;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -13,18 +14,7 @@ public class HashCache {
 
     public HashMap<String, FileProperty> entries = new HashMap<>();
 
-    private static final MessageDigest sha1Digest;
     private boolean isDirty = false;
-
-    static {
-        MessageDigest sha1Digest1;
-        try {
-            sha1Digest1 = MessageDigest.getInstance("SHA-1");
-        } catch (NoSuchAlgorithmException ignored) {
-            sha1Digest1 = null;
-        }
-        sha1Digest = sha1Digest1;
-    }
 
     public void load(Path file) throws IOException {
         if (!Files.isRegularFile(file)) return;
@@ -74,16 +64,8 @@ public class HashCache {
     }
 
     public static byte[] getDigest(File file) throws IOException {
-        InputStream fis = new BufferedInputStream(AssetEncryption.wrapInputStream(new FileInputStream(file)));
-        int n = 0;
-        byte[] buffer = new byte[8192];
-        while (n != -1) {
-            n = fis.read(buffer);
-            if (n > 0) {
-                sha1Digest.update(buffer, 0, n);
-            }
+        try (FileInputStream fis = new FileInputStream(file)) {
+            return DigestUtils.sha1(AssetEncryption.wrapInputStream(fis));
         }
-        fis.close();
-        return sha1Digest.digest();
     }
 }

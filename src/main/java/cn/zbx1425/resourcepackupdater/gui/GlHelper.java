@@ -202,6 +202,32 @@ public class GlHelper {
         RenderSystem.setProjectionMatrix(matrix);
     }
 
+    public static void setMatScaledPixel() {
+        Matrix4f matrix = new Matrix4f();
+        matrix.setIdentity();
+        matrix.multiply(Matrix4f.createScaleMatrix(2, -2, 1));
+        matrix.multiply(Matrix4f.createTranslateMatrix(-0.5f, -0.5f, 0));
+        matrix.multiply(Matrix4f.createScaleMatrix(1f / getScaledWidth(), 1f / getScaledHeight(), 1));
+        RenderSystem.setProjectionMatrix(matrix);
+    }
+
+    public static int getScaledWidth() {
+        int rawWidth = Minecraft.getInstance().getWindow().getWidth();
+        if (rawWidth < 854) {
+            return rawWidth;
+        } else if (rawWidth < 1920) {
+            return (int)((rawWidth - 854) * 1f / (1920 - 854) * (1366 - 854) + 854);
+        } else {
+            return 1366;
+        }
+    }
+
+    public static int getScaledHeight() {
+        int rawWidth = Minecraft.getInstance().getWindow().getWidth();
+        int rawHeight = Minecraft.getInstance().getWindow().getHeight();
+        return (int)(rawHeight * (getScaledWidth() * 1f / rawWidth));
+    }
+
     public static void setMatCenterForm(float width, float height, float widthPercent) {
         Matrix4f matrix = new Matrix4f();
         matrix.setIdentity();

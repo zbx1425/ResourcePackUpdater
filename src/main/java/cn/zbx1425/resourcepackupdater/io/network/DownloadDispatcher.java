@@ -26,6 +26,8 @@ public class DownloadDispatcher {
     public ConcurrentLinkedQueue<DownloadTask> incompleteTasks = new ConcurrentLinkedQueue<>();
     private final ConcurrentLinkedQueue<Runnable> delayedProgresses = new ConcurrentLinkedQueue<>();
 
+    private Exception taskException = null;
+
     public DownloadDispatcher(ProgressReceiver progressReceiver) {
         this.progressReceiver = progressReceiver;
     }
@@ -43,11 +45,12 @@ public class DownloadDispatcher {
                         task.runBlocking(target.get());
                         break;
                     } catch (Exception ex) {
+                        task.failedAttempts++;
                         if (task.failedAttempts < MAX_RETRIES) {
                             delayedProgresses.add(() -> {
                                 progressReceiver.printLog(ex.toString());
-                                progressReceiver.printLog(String.format("Retried (%d/%d) %s ...",
-                                        task.failedAttempts, MAX_RETRIES, task.fileName));
+                                progressReceiver.printLog(String.format("Retry (%d/%d) for %s (%s)",
+                                        task.failedAttempts, MAX_RETRIES, task.fileName, ex.getMessage()));
                             });
                         } else {
                             throw ex;
@@ -55,7 +58,7 @@ public class DownloadDispatcher {
                     }
                 }
             } catch (Exception e) {
-                delayedProgresses.add(() -> progressReceiver.setException(e));
+                taskException = e;
                 executor.shutdown();
                 runningTasks.clear();
                 incompleteTasks.clear();
@@ -96,7 +99,11 @@ public class DownloadDispatcher {
         progressReceiver.setInfo(runningProgress, message);
     }
 
-    public boolean tasksFinished() {
+    public boolean tasksFinished() throws Exception {
+        if (taskException != null) {
+            while (!delayedProgresses.isEmpty()) delayedProgresses.poll().run();
+            throw taskException;
+        }
         return incompleteTasks.isEmpty();
     }
 

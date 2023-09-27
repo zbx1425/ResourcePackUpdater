@@ -63,7 +63,7 @@ public class ConfigScreen extends Screen {
 
     private void updateBtnEnable() {
         for (var entry : sourceButtons.entrySet()) {
-            entry.getValue().active = !ResourcePackUpdater.CONFIG.activeSource.equals(entry.getKey());
+            entry.getValue().active = !ResourcePackUpdater.CONFIG.activeSource.value.equals(entry.getKey());
         }
     }
 
@@ -72,6 +72,7 @@ public class ConfigScreen extends Screen {
         if (isShowingLog) {
             GlHelper.initGlStates();
             try {
+                ResourcePackUpdater.GL_PROGRESS_SCREEN.setToException();
                 if (!ResourcePackUpdater.GL_PROGRESS_SCREEN.shouldContinuePausing(false)) {
                     isShowingLog = false;
                 }

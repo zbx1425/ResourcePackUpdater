@@ -53,7 +53,7 @@ public class GlProgressScreen implements ProgressReceiver {
         for (GlScreenForm form : forms) form.setException(exception);
         activeForm = exceptionForm;
         this.paused = true;
-        ResourcePackUpdater.LOGGER.error(exception);
+        ResourcePackUpdater.LOGGER.error("Resource Update Exception", exception);
     }
 
     public boolean shouldContinuePausing(boolean swap) throws GlHelper.MinecraftStoppingException {
@@ -71,6 +71,11 @@ public class GlProgressScreen implements ProgressReceiver {
     public void resetToSelectSource() {
         for (GlScreenForm form : forms) form.reset();
         activeForm = selectSourceForm;
+        paused = true;
+    }
+
+    public void setToException() {
+        activeForm = exceptionForm;
         paused = true;
     }
 

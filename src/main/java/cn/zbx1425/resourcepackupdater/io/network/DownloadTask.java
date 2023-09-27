@@ -7,6 +7,7 @@ import java.io.*;
 import java.net.URI;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Locale;
 import java.util.zip.GZIPInputStream;
@@ -32,6 +33,7 @@ public class DownloadTask {
     }
 
     public void runBlocking(OutputStream target) throws IOException {
+        ResourcePackUpdater.LOGGER.info("Starting download: " + fileName);
         HttpRequest httpRequest = HttpRequest.newBuilder(requestUri)
                 .timeout(Duration.ofSeconds(10))
                 .setHeader("User-Agent", "ResourcePackUpdater/" + ResourcePackUpdater.MOD_VERSION + " +https://www.zbx1425.cn")
@@ -43,6 +45,11 @@ public class DownloadTask {
             httpResponse = ResourcePackUpdater.HTTP_CLIENT.send(httpRequest, HttpResponse.BodyHandlers.ofInputStream());
         } catch (InterruptedException ex) {
             throw new IOException(ex);
+        }
+
+        if (httpResponse.statusCode() >= 400) {
+            throw new IOException("Server returned HTTP " + httpResponse.statusCode() + " "
+                    + new String(httpResponse.body().readAllBytes(), StandardCharsets.UTF_8));
         }
 
         totalBytes = Long.parseLong(httpResponse.headers().firstValue("Content-Length").orElse(Long.toString(expectedSize)));
@@ -68,7 +75,6 @@ public class DownloadTask {
         } catch (Exception ex) {
             dispatcher.onDownloadProgress(-accountedAmount[0]);
             downloadedBytes = 0;
-            failedAttempts++;
             throw ex;
         }
         dispatcher.onDownloadProgress(totalBytes - accountedAmount[0]);
