@@ -123,7 +123,7 @@ public class GlHelper {
 
     public static void drawString(float x1, float y1, float width, float height, float fontSize,
                                   String text, int color, boolean monospace, boolean noWrap) {
-        float CHAR_SPACING = 0.15f;
+        float CHAR_SPACING = 0.1f;
         float LINE_SPACING = 0.25f;
         float SPACE_WIDTH = 0.5f;
 

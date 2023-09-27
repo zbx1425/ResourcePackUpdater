@@ -9,7 +9,7 @@ public class ProgressForm implements GlScreenForm {
     private String primaryInfo = "";
     private String auxilaryInfo = "";
     private float primaryProgress;
-    private float secondaryProgress;
+    private String secondaryProgress;
 
     private static final float progressFormWidth = 600, progressFormHeight = 240;
 
@@ -29,13 +29,18 @@ public class ProgressForm implements GlScreenForm {
         GlHelper.drawString(barBegin + usableBarWidth * primaryProgress, 70 + 10, 80, LINE_HEIGHT, 16,
                 String.format("%d%%", Math.round(primaryProgress * 100)), 0xff46ddb9, false, true);
 
+        /*
         GlHelper.blit(barBegin, 110, usableBarWidth, 30, 0x4449baee);
         GlHelper.blit(barBegin, 110, usableBarWidth * secondaryProgress, 30, 0xff49baee);
         GlHelper.drawString(barBegin + usableBarWidth * secondaryProgress, 110 + 10, 80, LINE_HEIGHT, 16,
                 String.format("%d%%", Math.round(secondaryProgress * 100)), 0xff49baee, false, true);
+        */
+
+        GlHelper.drawString(barBegin, 110, usableBarWidth, 170 - 110, 16,
+                secondaryProgress, 0xff222222, false, false);
 
         boolean monospace = !auxilaryInfo.isEmpty() && auxilaryInfo.charAt(0)== ':';
-        GlHelper.drawString(20, 160, progressFormWidth - 40, 50, 20,
+        GlHelper.drawString(20, 180, progressFormWidth - 40, 30, 18,
                 monospace ? auxilaryInfo.substring(1) : auxilaryInfo, 0xff222222, monospace, false);
 
         GlHelper.drawString(20, progressFormHeight - 20, 144, 16, 16, "Cancel: ESC", 0xff222222, false, true);
@@ -56,7 +61,7 @@ public class ProgressForm implements GlScreenForm {
         primaryInfo = "";
         auxilaryInfo = "";
         primaryProgress = 0;
-        secondaryProgress = 0;
+        secondaryProgress = "";
     }
 
     @Override
@@ -72,11 +77,10 @@ public class ProgressForm implements GlScreenForm {
     @Override
     public void setProgress(float primary, float secondary) throws GlHelper.MinecraftStoppingException {
         this.primaryProgress = primary;
-        this.secondaryProgress = secondary;
     }
 
     @Override
-    public void setSecondaryProgress(float secondary, String textValue) throws GlHelper.MinecraftStoppingException {
+    public void setInfo(String secondary, String textValue) throws GlHelper.MinecraftStoppingException {
         this.secondaryProgress = secondary;
         this.auxilaryInfo = textValue;
     }

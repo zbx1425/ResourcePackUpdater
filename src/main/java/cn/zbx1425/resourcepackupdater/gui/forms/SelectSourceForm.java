@@ -116,7 +116,7 @@ public class SelectSourceForm implements GlScreenForm {
     }
 
     @Override
-    public void setSecondaryProgress(float value, String textValue) throws GlHelper.MinecraftStoppingException {
+    public void setInfo(String value, String textValue) throws GlHelper.MinecraftStoppingException {
 
     }
 

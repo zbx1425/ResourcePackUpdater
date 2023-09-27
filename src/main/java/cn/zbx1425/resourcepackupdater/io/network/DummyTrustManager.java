@@ -1,4 +1,4 @@
-package cn.zbx1425.resourcepackupdater.io;
+package cn.zbx1425.resourcepackupdater.io.network;
 
 import javax.net.ssl.*;
 import java.net.Socket;

@@ -1,30 +1,27 @@
-package cn.zbx1425.resourcepackupdater.io;
+package cn.zbx1425.resourcepackupdater.io.network;
 
 import cn.zbx1425.resourcepackupdater.ResourcePackUpdater;
 import cn.zbx1425.resourcepackupdater.drm.AssetEncryption;
+import cn.zbx1425.resourcepackupdater.io.FileProperty;
+import cn.zbx1425.resourcepackupdater.io.HashCache;
+import cn.zbx1425.resourcepackupdater.io.ProgressReceiver;
 import cn.zbx1425.resourcepackupdater.util.MismatchingVersionException;
 import cn.zbx1425.resourcepackupdater.util.MtrVersion;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.http.client.utils.URIBuilder;
 
 import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.security.MessageDigest;
 import java.time.Duration;
 import java.util.*;
-import java.util.zip.GZIPInputStream;
 
 public class RemoteMetadata {
 
@@ -189,7 +186,7 @@ public class RemoteMetadata {
 
         long downloadedBytesBefore = downloadedBytes;
         try {
-            try (BufferedOutputStream bos = new BufferedOutputStream(target); InputStream inputStream = unwrapHttpResponse(httpResponse)) {
+            try (BufferedOutputStream bos = new BufferedOutputStream(target); InputStream inputStream = DownloadTask.unwrapHttpResponse(httpResponse)) {
                 final ProgressOutputStream pOfs = new ProgressOutputStream(bos, new ProgressOutputStream.WriteListener() {
                     long lastAmount = -1;
                     final long noticeDivisor = 8192;
@@ -202,11 +199,11 @@ public class RemoteMetadata {
                             if (fileSize > 0) {
                                 String message = String.format(": %5d KiB / %5d KiB; %5d KiB/s",
                                         amountOfBytesWritten / 1024, fileSize / 1024, elapsedTimeSecs == 0 ? 0 : downloadedBytes / elapsedTimeSecs / 1024);
-                                cb.setSecondaryProgress(amountOfBytesWritten * 1f / fileSize, message);
+                                cb.setInfo(String.format("%.2f%%", amountOfBytesWritten * 1f / fileSize * 100), message);
                             } else {
                                 String message = String.format(": %5d KiB downloaded; %5d KiB/s",
                                         amountOfBytesWritten / 1024, elapsedTimeSecs == 0 ? 0 : downloadedBytes / elapsedTimeSecs / 1024);
-                                cb.setSecondaryProgress(((System.currentTimeMillis() - downloadStartTime) / 1000f) % 1f, message);
+                                cb.setInfo(String.format("%.2f%%", (System.currentTimeMillis() % 1000) / 1000f * 100), message);
                             }
                             lastAmount = amountOfBytesWritten;
                         }
@@ -219,18 +216,6 @@ public class RemoteMetadata {
             throw ex;
         }
         downloadedBytes = downloadedBytesBefore + fileSize;
-    }
-
-    private static InputStream unwrapHttpResponse(HttpResponse<InputStream> response) throws IOException {
-        String contentEncoding = response.headers().firstValue("Content-Encoding").orElse("").toLowerCase(Locale.ROOT);
-        switch (contentEncoding) {
-            case "":
-                return response.body();
-            case "gzip":
-                return new GZIPInputStream(response.body());
-            default:
-                throw new IOException("Unsupported Content-Encoding: " + contentEncoding);
-        }
     }
 
     public void assertMetadataVersion(JsonObject metadataObj) throws MismatchingVersionException {

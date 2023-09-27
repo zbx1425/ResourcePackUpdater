@@ -1,9 +1,9 @@
 package cn.zbx1425.resourcepackupdater.io;
 
 import cn.zbx1425.resourcepackupdater.drm.AssetEncryption;
+import cn.zbx1425.resourcepackupdater.io.network.RemoteMetadata;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import org.apache.commons.io.IOUtils;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -12,8 +12,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.util.*;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 
 public class LocalMetadata {
 

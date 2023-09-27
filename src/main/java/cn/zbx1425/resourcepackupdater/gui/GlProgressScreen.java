@@ -43,8 +43,8 @@ public class GlProgressScreen implements ProgressReceiver {
     }
 
     @Override
-    public void setSecondaryProgress(float secondary, String textValue) throws GlHelper.MinecraftStoppingException {
-        for (GlScreenForm form : forms) form.setSecondaryProgress(secondary, textValue);
+    public void setInfo(String secondary, String textValue) throws GlHelper.MinecraftStoppingException {
+        for (GlScreenForm form : forms) form.setInfo(secondary, textValue);
         redrawScreen(true);
     }
 

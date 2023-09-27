@@ -4,7 +4,7 @@ import cn.zbx1425.resourcepackupdater.drm.ServerLockRegistry;
 import cn.zbx1425.resourcepackupdater.gui.GlHelper;
 import cn.zbx1425.resourcepackupdater.gui.GlProgressScreen;
 import cn.zbx1425.resourcepackupdater.io.Dispatcher;
-import cn.zbx1425.resourcepackupdater.io.DummyTrustManager;
+import cn.zbx1425.resourcepackupdater.io.network.DummyTrustManager;
 import com.google.gson.JsonParser;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.loader.api.FabricLoader;
@@ -14,11 +14,14 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.repository.PackRepository;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.util.ExecutorServices;
 
 import java.io.IOException;
 import java.net.http.HttpClient;
 import java.time.Duration;
 import java.util.Properties;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class ResourcePackUpdater implements ModInitializer {
 
@@ -43,9 +46,11 @@ public class ResourcePackUpdater implements ModInitializer {
         final Properties props = System.getProperties();
         props.setProperty("jdk.internal.httpclient.disableHostnameVerification", Boolean.TRUE.toString());
 
+        ExecutorService HTTP_CLIENT_EXECUTOR = Executors.newFixedThreadPool(4);
         HTTP_CLIENT = HttpClient.newBuilder()
                 .followRedirects(HttpClient.Redirect.NORMAL)
                 .connectTimeout(Duration.ofSeconds(10))
+                .executor(HTTP_CLIENT_EXECUTOR)
                 .sslContext(DummyTrustManager.UNSAFE_CONTEXT)
                 .build();
     }
@@ -83,14 +88,17 @@ public class ResourcePackUpdater implements ModInitializer {
                 ServerLockRegistry.lockAllSyncedPacks = true;
             }
 
-            while (ResourcePackUpdater.GL_PROGRESS_SCREEN.shouldContinuePausing(true)) {
-                Thread.sleep(50);
-            }
-
             Minecraft.getInstance().options.save();
         } catch (Exception ignored) {
             ServerLockRegistry.lockAllSyncedPacks = true;
         }
+
+        try {
+            while (ResourcePackUpdater.GL_PROGRESS_SCREEN.shouldContinuePausing(true)) {
+                Thread.sleep(50);
+            }
+        } catch (Exception ignored) { }
+
         ServerLockRegistry.updateLocalServerLock(ResourcePackUpdater.CONFIG.packBaseDirFile.value);
         GlHelper.resetGlStates();
     }

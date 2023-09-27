@@ -65,8 +65,8 @@ public class Config {
         "clientEnforceVersion", JsonElement::getAsString, JsonPrimitive::new, "");
 
     public List<ConfigItem<?>> configItems = List.of(
-        sourceList, activeSource, localPackName, disableBuiltinSources, sourceSelectDelay, pauseWhenSuccess,
-        packBaseDirFile, serverLockKey, clientEnforceInstall, clientEnforceVersion
+        remoteConfigUrl, sourceList, activeSource, localPackName, disableBuiltinSources, sourceSelectDelay,
+        pauseWhenSuccess, packBaseDirFile, serverLockKey, clientEnforceInstall, clientEnforceVersion
     );
 
     public void load() throws IOException {
@@ -113,6 +113,7 @@ public class Config {
         }
 
         if (!disableBuiltinSources.value) addBuiltinSources();
+        if (!sourceList.value.contains(activeSource.value)) activeSource.value = null;
         if (activeSource.value == null) {
             if (sourceList.value.isEmpty()) {
                 activeSource.value = new SourceProperty(

@@ -64,7 +64,7 @@ public class ExceptionForm implements GlScreenForm {
             logViewOffset = Math.min(maxLogViewOffset, logViewOffset + 1);
         }
 
-        return !InputConstants.isKeyDown(glfwWindow, InputConstants.KEY_RETURN);
+        return InputConstants.isKeyDown(glfwWindow, InputConstants.KEY_RETURN);
     }
 
     @Override
@@ -94,7 +94,7 @@ public class ExceptionForm implements GlScreenForm {
     }
 
     @Override
-    public void setSecondaryProgress(float value, String textValue) throws GlHelper.MinecraftStoppingException {
+    public void setInfo(String value, String textValue) throws GlHelper.MinecraftStoppingException {
 
     }
 

@@ -3,6 +3,11 @@ package cn.zbx1425.resourcepackupdater.io;
 import cn.zbx1425.resourcepackupdater.Config;
 import cn.zbx1425.resourcepackupdater.ResourcePackUpdater;
 import cn.zbx1425.resourcepackupdater.gui.GlHelper;
+import cn.zbx1425.resourcepackupdater.gui.GlProgressScreen;
+import cn.zbx1425.resourcepackupdater.io.network.DownloadDispatcher;
+import cn.zbx1425.resourcepackupdater.io.network.DownloadTask;
+import cn.zbx1425.resourcepackupdater.io.network.PackOutputStream;
+import cn.zbx1425.resourcepackupdater.io.network.RemoteMetadata;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.io.FileUtils;
 
@@ -12,6 +17,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Stream;
 
 public class Dispatcher {
 
@@ -99,36 +105,22 @@ public class Dispatcher {
             }
             cb.amendLastLog("Done");
 
-            int handledFiles = 0;
-            long totalBytesToDownload = 0;
-            int totalFiles = filesToCreate.size() + filesToUpdate.size();
-            for (String file : filesToCreate) totalBytesToDownload += remoteMetadata.files.get(file).size;
-            for (String file : filesToUpdate) totalBytesToDownload += remoteMetadata.files.get(file).size;
-            remoteMetadata.beginDownloads(cb);
-            for (String file : filesToCreate) {
-                cb.printLog("Downloading " + file + " ...");
-                if (totalBytesToDownload > 0) {
-                    cb.setProgress(remoteMetadata.downloadedBytes * 1f / totalBytesToDownload, 0);
-                } else {
-                    cb.setProgress(handledFiles * 1f / totalFiles, 0);
-                }
-                remoteMetadata.httpGetFile(Paths.get(baseDir, file), file, cb);
-                cb.amendLastLog("Done");
-                handledFiles++;
+            cb.printLog("Downloading files ...");
+            DownloadDispatcher downloadDispatcher = new DownloadDispatcher(cb);
+            for (String file : Stream.concat(filesToCreate.stream(), filesToUpdate.stream()).toList()) {
+                DownloadTask task = new DownloadTask(downloadDispatcher,
+                        remoteMetadata.baseUrl + "/dist/" + file, remoteMetadata.files.get(file).size);
+                downloadDispatcher.dispatch(task, () -> new PackOutputStream(Paths.get(baseDir, file),
+                        remoteMetadata.encrypt, remoteMetadata.files.get(file).hash));
             }
-            for (String file : filesToUpdate) {
-                cb.printLog("Updating " + file + " ...");
-                if (totalBytesToDownload > 0) {
-                    cb.setProgress(remoteMetadata.downloadedBytes * 1f / totalBytesToDownload, 0);
-                } else {
-                    cb.setProgress(handledFiles * 1f / totalFiles, 0);
-                }
-                remoteMetadata.httpGetFile(Paths.get(baseDir, file), file, cb);
-                cb.amendLastLog("Done");
-                handledFiles++;
+            while (!downloadDispatcher.tasksFinished()) {
+                downloadDispatcher.updateSummary();
+                ((GlProgressScreen)cb).redrawScreen(true);
+                Thread.sleep(250);
             }
-            remoteMetadata.endDownloads(cb);
+            downloadDispatcher.close();
 
+            cb.setInfo("", "");
             cb.setProgress(1, 1);
             cb.printLog("");
             cb.printLog("Done! Thank you.");
