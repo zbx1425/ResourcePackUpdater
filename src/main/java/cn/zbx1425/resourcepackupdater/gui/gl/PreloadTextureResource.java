@@ -1,4 +1,4 @@
-package cn.zbx1425.resourcepackupdater.gui;
+package cn.zbx1425.resourcepackupdater.gui.gl;
 
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.Resource;

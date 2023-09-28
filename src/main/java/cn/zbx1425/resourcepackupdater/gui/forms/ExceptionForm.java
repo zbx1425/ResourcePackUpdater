@@ -1,6 +1,6 @@
 package cn.zbx1425.resourcepackupdater.gui.forms;
 
-import cn.zbx1425.resourcepackupdater.gui.GlHelper;
+import cn.zbx1425.resourcepackupdater.gui.gl.GlHelper;
 import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.Minecraft;
 
@@ -17,28 +17,26 @@ public class ExceptionForm implements GlScreenForm {
     public void render() {
         GlHelper.setMatScaledPixel();
         GlHelper.begin(GlHelper.PRELOAD_FONT_TEXTURE);
-        GlHelper.blit(0, 0, GlHelper.getScaledWidth(), GlHelper.getScaledHeight(), 0x88000000);
+        GlHelper.blit(0, 0, GlHelper.getWidth(), GlHelper.getHeight(), 0x88000000);
 
-        // Minecraft.getInstance().getTextureManager().getTexture(GlHelper.PRELOAD_FONT_TEXTURE).setFilter(true, false);
-        GlHelper.drawBlueGradientBackground();
         if (exception != null) {
-            GlHelper.drawShadowString(20, 60, GlHelper.getScaledWidth() - 40, LINE_HEIGHT, FONT_SIZE,
+            GlHelper.drawShadowString(20, 60, GlHelper.getWidth() - 40, LINE_HEIGHT, FONT_SIZE,
                     "There was an error! Please report.",
                     0xFFFF0000, false, true);
         }
-        GlHelper.drawShadowString(GlHelper.getScaledWidth() - 240 - 20, 20, 240, 16, 16, "Arrow Keys to Scroll", 0xffdddddd, false, true);
+        GlHelper.drawShadowString(GlHelper.getWidth() - 240 - 20, 20, 240, 16, 16, "Arrow Keys to Scroll", 0xffdddddd, false, true);
         int backColor = System.currentTimeMillis() % 400 >= 200 ? 0xff9722ff : 0xFF000000;
-        GlHelper.blit(0, 60 + LINE_HEIGHT, GlHelper.getScaledWidth(), LINE_HEIGHT, backColor);
-        GlHelper.drawShadowString(20, 60 + LINE_HEIGHT, GlHelper.getScaledWidth() - 40, LINE_HEIGHT, FONT_SIZE,
+        GlHelper.blit(0, 60 + LINE_HEIGHT, GlHelper.getWidth(), LINE_HEIGHT, backColor);
+        GlHelper.drawShadowString(20, 60 + LINE_HEIGHT, GlHelper.getWidth() - 40, LINE_HEIGHT, FONT_SIZE,
                 "Press ENTER to proceed.",
                 0xffdddddd, false, true);
 
         final int LOG_FONT_SIZE = 16;
         final int LOG_LINE_HEIGHT = 20;
         float logBegin = 60 + LOG_LINE_HEIGHT * 3 + 40;
-        float usableLogHeight = GlHelper.getScaledHeight() - logBegin - 20;
+        float usableLogHeight = GlHelper.getHeight() - logBegin - 20;
         for (int i = logViewOffset; i < logs.size(); i++) {
-            GlHelper.drawShadowString(20, logBegin + LOG_LINE_HEIGHT * (i - logViewOffset), GlHelper.getScaledWidth() - 40, usableLogHeight, LOG_FONT_SIZE,
+            GlHelper.drawShadowString(20, logBegin + LOG_LINE_HEIGHT * (i - logViewOffset), GlHelper.getWidth() - 40, usableLogHeight, LOG_FONT_SIZE,
                     logs.get(i), 0xFFDDDDDD, false, true);
         }
         GlHelper.end();
@@ -50,7 +48,7 @@ public class ExceptionForm implements GlScreenForm {
 
         final int LOG_LINE_HEIGHT = 20;
         float logBegin = 60 + LOG_LINE_HEIGHT * 3 + 40;
-        float usableLogHeight = GlHelper.getScaledHeight() - logBegin - 20;
+        float usableLogHeight = GlHelper.getHeight() - logBegin - 20;
         int logLines = (int) Math.floor(usableLogHeight / LOG_LINE_HEIGHT);
         int maxLogViewOffset = Math.max(0, logs.size() - logLines);
 
@@ -82,7 +80,7 @@ public class ExceptionForm implements GlScreenForm {
         logs.add(line);
         final int LOG_LINE_HEIGHT = 20;
         float logBegin = 60 + LOG_LINE_HEIGHT * 3 + 40;
-        float usableLogHeight = GlHelper.getScaledHeight() - logBegin - 20;
+        float usableLogHeight = GlHelper.getHeight() - logBegin - 20;
         int logLines = (int) Math.floor(usableLogHeight / LOG_LINE_HEIGHT);
         logViewOffset = Math.max(0, logs.size() - logLines);
     }

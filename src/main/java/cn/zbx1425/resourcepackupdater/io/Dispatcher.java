@@ -2,7 +2,7 @@ package cn.zbx1425.resourcepackupdater.io;
 
 import cn.zbx1425.resourcepackupdater.Config;
 import cn.zbx1425.resourcepackupdater.ResourcePackUpdater;
-import cn.zbx1425.resourcepackupdater.gui.GlHelper;
+import cn.zbx1425.resourcepackupdater.gui.gl.GlHelper;
 import cn.zbx1425.resourcepackupdater.gui.GlProgressScreen;
 import cn.zbx1425.resourcepackupdater.io.network.DownloadDispatcher;
 import cn.zbx1425.resourcepackupdater.io.network.DownloadTask;
@@ -105,24 +105,27 @@ public class Dispatcher {
             }
             cb.amendLastLog("Done");
 
+            remoteMetadata.beginDownloads(cb);
             cb.printLog("Downloading files ...");
             DownloadDispatcher downloadDispatcher = new DownloadDispatcher(cb);
             for (String file : Stream.concat(filesToCreate.stream(), filesToUpdate.stream()).toList()) {
                 DownloadTask task = new DownloadTask(downloadDispatcher,
                         remoteMetadata.baseUrl + "/dist/" + file, remoteMetadata.files.get(file).size);
                 downloadDispatcher.dispatch(task, () -> new PackOutputStream(Paths.get(baseDir, file),
-                        remoteMetadata.encrypt, remoteMetadata.files.get(file).hash));
+                        remoteMetadata.encrypt, localMetadata.hashCache, remoteMetadata.files.get(file).hash));
             }
             while (!downloadDispatcher.tasksFinished()) {
                 downloadDispatcher.updateSummary();
                 ((GlProgressScreen)cb).redrawScreen(true);
                 Thread.sleep(250);
             }
+            remoteMetadata.downloadedBytes += downloadDispatcher.downloadedBytes;
             downloadDispatcher.close();
 
             cb.setInfo("", "");
             cb.setProgress(1, 1);
             cb.printLog("");
+            remoteMetadata.endDownloads(cb);
             cb.printLog("Done! Thank you.");
             return true;
         } catch (GlHelper.MinecraftStoppingException ex) {

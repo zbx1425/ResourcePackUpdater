@@ -1,7 +1,7 @@
 package cn.zbx1425.resourcepackupdater.mixin;
 
 import cn.zbx1425.resourcepackupdater.ResourcePackUpdater;
-import cn.zbx1425.resourcepackupdater.gui.PreloadTextureResource;
+import cn.zbx1425.resourcepackupdater.gui.gl.PreloadTextureResource;
 import net.minecraft.resources.ResourceLocation;
 #if MC_VERSION >= "11800"
 import net.minecraft.server.packs.resources.MultiPackResourceManager;

@@ -25,7 +25,7 @@ public class LocalMetadata {
 
     public LocalMetadata(String baseDir) {
         this.baseDir = baseDir;
-        this.hashCache = new HashCache();
+        this.hashCache = new HashCache(Paths.get(baseDir));
     }
 
     public void loadHashCache() throws Exception {
@@ -49,7 +49,7 @@ public class LocalMetadata {
                 } else {
                     if (entry.getFileName().toString().toLowerCase(Locale.ROOT).equals("desktop.ini")) continue;
                     if (shouldEncrypt) AssetEncryption.encryptIfRaw(entry.toFile());
-                    files.put(relPath, hashCache.getDigest(relPath, entry.toFile()));
+                    files.put(relPath, hashCache.getDigest(entry.toFile()));
                 }
             }
         }

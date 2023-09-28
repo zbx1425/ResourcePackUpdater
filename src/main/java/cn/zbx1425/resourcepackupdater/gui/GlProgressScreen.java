@@ -5,6 +5,7 @@ import cn.zbx1425.resourcepackupdater.gui.forms.ExceptionForm;
 import cn.zbx1425.resourcepackupdater.gui.forms.GlScreenForm;
 import cn.zbx1425.resourcepackupdater.gui.forms.ProgressForm;
 import cn.zbx1425.resourcepackupdater.gui.forms.SelectSourceForm;
+import cn.zbx1425.resourcepackupdater.gui.gl.GlHelper;
 import cn.zbx1425.resourcepackupdater.io.ProgressReceiver;
 import com.mojang.blaze3d.platform.Window;
 import net.minecraft.client.Minecraft;
@@ -99,24 +100,23 @@ public class GlProgressScreen implements ProgressReceiver {
             new ResourceLocation(ResourcePackUpdater.MOD_ID, "textures/gui/background.png");
 
     private static void drawBackground() {
-        GlHelper.setMatPixel();
+        GlHelper.setMatScaledPixel();
         GlHelper.begin(PRELOAD_BACKGROUND_TEXTURE);
         Minecraft.getInstance().getTextureManager().getTexture(PRELOAD_BACKGROUND_TEXTURE).setFilter(true, false);
-        Window window = Minecraft.getInstance().getWindow();
-        float bgScale = Math.max(window.getWidth() / 16f, window.getHeight() / 9f);
+        float bgScale = Math.max(GlHelper.getWidth() / 16f, GlHelper.getHeight() / 9f);
         float bgW = 16 * bgScale, bgH = 9 * bgScale;
-        float bgX = (window.getWidth() - bgW) / 2, bgY = (window.getHeight() - bgH) / 2;
+        float bgX = (GlHelper.getWidth() - bgW) / 2, bgY = (GlHelper.getHeight() - bgH) / 2;
         GlHelper.blit(bgX, bgY, bgW, bgH, 0, 0, 1, 1, 0xffffffff);
         GlHelper.end();
 
         GlHelper.begin(GlHelper.PRELOAD_FONT_TEXTURE);
-        GlHelper.drawShadowString(window.getWidth() - 10 - 80, window.getHeight() - 10 - 16, 80, 20, 16,
+        GlHelper.drawShadowString(GlHelper.getWidth() - 10 - 80, GlHelper.getHeight() - 10 - 16, 80, 20, 16,
                 "v" + ResourcePackUpdater.MOD_VERSION, 0xffffff00, false, true);
         GlHelper.end();
 
         GlHelper.begin(PRELOAD_HEADER_TEXTURE);
         float hdW = 512, hdH = hdW * 32 / 512;
-        GlHelper.blit(10, window.getHeight() - 10 - hdH, hdW, hdH, 0, 0, 1, 1, 0xffffffff);
+        GlHelper.blit(10, GlHelper.getHeight() - 10 - hdH, hdW, hdH, 0, 0, 1, 1, 0xffffffff);
         GlHelper.end();
     }
 }

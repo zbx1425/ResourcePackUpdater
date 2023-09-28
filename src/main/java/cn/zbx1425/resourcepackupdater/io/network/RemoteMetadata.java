@@ -120,7 +120,7 @@ public class RemoteMetadata {
                     }
                 }
                 byte[] expectedSha = files.get(file).hash;
-                byte[] localSha = HashCache.getDigest(localPath.toFile());
+                byte[] localSha = HashCache.calculateDigest(localPath.toFile());
                 if (!Arrays.equals(localSha, expectedSha)) {
                     throw new IOException("SHA1 mismatch: " + Hex.encodeHexString(localSha) + " downloaded, " +
                             Hex.encodeHexString(expectedSha) + " expected");
@@ -146,7 +146,7 @@ public class RemoteMetadata {
     public void endDownloads(ProgressReceiver cb) throws IOException {
         long elapsedTimeSecs = (System.currentTimeMillis() - downloadStartTime) / 1000;
         long speedKibPS = elapsedTimeSecs == 0 ? 0 : downloadedBytes / elapsedTimeSecs / 1024;
-        cb.printLog(String.format("Downloaded %.2f MiB in %02d:%02d. Average speed %d KiB/s.",
+        cb.setInfo("", String.format("%.2f MiB in %02d:%02d, Average speed %d KiB/s",
                 downloadedBytes * 1f / 1024 / 1024, elapsedTimeSecs / 60, elapsedTimeSecs % 60, speedKibPS));
     }
 
@@ -154,34 +154,8 @@ public class RemoteMetadata {
         URI requestUri;
         try {
             requestUri = url.toURI();
-        } catch (URISyntaxException e) {
-            throw new IOException(e);
-        }
-        /*
-        try {
-            MessageDigest md5 = MessageDigest.getInstance("MD5");
-            byte[] digest = md5.digest((url.getPath() + "?REALLY-BAD-VALIDATION-IDEA")
-                    .getBytes(StandardCharsets.UTF_8));
-            String digestStr = StringUtils.stripEnd(Base64.getEncoder().encodeToString(digest).replace('+', '-').replace('/', '_'), "=");
-            requestUri = new URIBuilder(url.toURI()).addParameter("md5", digestStr).build();
-        } catch (Exception ex) {
-            throw new IOException(ex);
-        }
-         */
-
-        HttpRequest httpRequest = HttpRequest.newBuilder(requestUri)
-                .timeout(Duration.ofSeconds(10))
-                .setHeader("User-Agent", "ResourcePackUpdater/" + ResourcePackUpdater.MOD_VERSION + " +https://www.zbx1425.cn")
-                .setHeader("Accept-Encoding", "gzip")
-                .GET()
-                .build();
-        HttpResponse<InputStream> httpResponse;
-        try {
-            httpResponse = ResourcePackUpdater.HTTP_CLIENT.send(httpRequest, HttpResponse.BodyHandlers.ofInputStream());
-        } catch (InterruptedException ex) {
-            throw new IOException(ex);
-        }
-
+        } catch (URISyntaxException e) { throw new IOException(e); }
+        HttpResponse<InputStream> httpResponse = DownloadTask.sendHttpRequest(requestUri);
         long fileSize = Long.parseLong(httpResponse.headers().firstValue("Content-Length").orElse(Long.toString(expectedSize)));
 
         long downloadedBytesBefore = downloadedBytes;

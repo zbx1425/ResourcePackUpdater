@@ -1,17 +1,14 @@
-package cn.zbx1425.resourcepackupdater.gui;
+package cn.zbx1425.resourcepackupdater.gui.gl;
 
 import cn.zbx1425.resourcepackupdater.ResourcePackUpdater;
 import com.mojang.blaze3d.platform.Window;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
 import com.mojang.math.Matrix4f;
-import com.mojang.math.Vector4f;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.resources.ResourceLocation;
-
-import java.io.IOException;
 
 public class GlHelper {
 
@@ -48,13 +45,15 @@ public class GlHelper {
     }
 
     public static final ResourceLocation PRELOAD_FONT_TEXTURE =
-            new ResourceLocation(ResourcePackUpdater.MOD_ID, "textures/font/unicode_page_00.png");
+            new ResourceLocation(ResourcePackUpdater.MOD_ID, "textures/font/roboto.png");
+    public static final SimpleFont preloadFont = new SimpleFont(PRELOAD_FONT_TEXTURE);
 
     private static BufferBuilder bufferBuilder;
 
     public static void begin(ResourceLocation texture) {
         bufferBuilder = Tesselator.getInstance().getBuilder();
         bufferBuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
+        Minecraft.getInstance().getTextureManager().getTexture(texture).setFilter(true, false);
         RenderSystem.setShaderTexture(0, texture);
     }
 
@@ -71,13 +70,6 @@ public class GlHelper {
         }
     }
 
-    public static void drawBlueGradientBackground() {
-        withColor(bufferBuilder.vertex(-1, 1, 1f).uv(118f/256f, 8f/256f), 0xff014e7c).endVertex();
-        withColor(bufferBuilder.vertex(1, 1, 1f).uv(118f/256f, 8f/256f), 0xff0d1033).endVertex();
-        withColor(bufferBuilder.vertex(1, -1, 1f).uv(118f/256f, 8f/256f), 0xff501639).endVertex();
-        withColor(bufferBuilder.vertex(-1, -1, 1f).uv(118f/256f, 8f/256f), 0xff02142a).endVertex();
-    }
-
     public static void blit(float x1, float y1, float width, float height, float u1, float v1, float u2, float v2, int color) {
         float x2 = x1 + width;
         float y2 = y1 + height;
@@ -90,30 +82,11 @@ public class GlHelper {
     public static void blit(float x1, float y1, float width, float height, int color) {
         float x2 = x1 + width;
         float y2 = y1 + height;
-        withColor(bufferBuilder.vertex(x1, y1, 1f).uv(118f/256f, 8f/256f), color).endVertex();
-        withColor(bufferBuilder.vertex(x2, y1, 1f).uv(118f/256f, 8f/256f), color).endVertex();
-        withColor(bufferBuilder.vertex(x2, y2, 1f).uv(118f/256f, 8f/256f), color).endVertex();
-        withColor(bufferBuilder.vertex(x1, y2, 1f).uv(118f/256f, 8f/256f), color).endVertex();
+        withColor(bufferBuilder.vertex(x1, y1, 1f).uv(preloadFont.whiteU, preloadFont.whiteV), color).endVertex();
+        withColor(bufferBuilder.vertex(x2, y1, 1f).uv(preloadFont.whiteU, preloadFont.whiteV), color).endVertex();
+        withColor(bufferBuilder.vertex(x2, y2, 1f).uv(preloadFont.whiteU, preloadFont.whiteV), color).endVertex();
+        withColor(bufferBuilder.vertex(x1, y2, 1f).uv(preloadFont.whiteU, preloadFont.whiteV), color).endVertex();
     }
-
-    private static final byte[] GLYPH_SIZES = {
-            0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F,
-            0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F,
-            0x0F, 0x44, 0x26, 0x16, 0x17, 0x17, 0x17, 0x44, 0x35, 0x24, 0x17, 0x17, 0x34, 0x16, 0x34, 0x16,
-            0x16, 0x26, 0x16, 0x16, 0x16, 0x16, 0x16, 0x16, 0x16, 0x16, 0x34, 0x34, 0x26, 0x16, 0x15, 0x16,
-            0x16, 0x16, 0x16, 0x16, 0x16, 0x16, 0x16, 0x16, 0x16, 0x26, 0x17, 0x16, 0x16, 0x16, 0x16, 0x16,
-            0x16, 0x17, 0x16, 0x16, 0x17, 0x16, 0x17, 0x16, 0x16, 0x17, 0x16, 0x46, 0x16, 0x13, 0x16, 0x17,
-            0x24, 0x16, 0x16, 0x16, 0x16, 0x16, 0x15, 0x16, 0x16, 0x26, 0x15, 0x16, 0x26, 0x17, 0x16, 0x16,
-            0x16, 0x16, 0x16, 0x16, 0x15, 0x16, 0x16, 0x17, 0x16, 0x16, 0x16, 0x35, 0x44, 0x24, 0x17, 0x0F,
-            0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F,
-            0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F,
-            0x0F, 0x44, 0x17, 0x17, 0x16, 0x17, 0x44, 0x16, 0x25, 0x07, 0x26, 0x16, 0x16, 0x0F, 0x07, 0x16,
-            0x24, 0x17, 0x26, 0x26, 0x35, 0x26, 0x16, 0x34, 0x24, 0x24, 0x26, 0x16, 0x16, 0x16, 0x16, 0x16,
-            0x16, 0x16, 0x16, 0x16, 0x16, 0x16, 0x17, 0x16, 0x16, 0x16, 0x16, 0x16, 0x26, 0x26, 0x26, 0x26,
-            0x06, 0x16, 0x16, 0x16, 0x16, 0x16, 0x16, 0x16, 0x16, 0x16, 0x16, 0x16, 0x16, 0x17, 0x16, 0x16,
-            0x16, 0x16, 0x16, 0x16, 0x16, 0x16, 0x17, 0x16, 0x16, 0x16, 0x16, 0x16, 0x26, 0x26, 0x26, 0x26,
-            0x16, 0x16, 0x16, 0x16, 0x16, 0x16, 0x16, 0x16, 0x16, 0x16, 0x16, 0x16, 0x16, 0x16, 0x26, 0x16
-    };
 
     public static void drawShadowString(float x1, float y1, float width, float height, float fontSize,
                                   String text, int color, boolean monospace, boolean noWrap) {
@@ -123,47 +96,26 @@ public class GlHelper {
 
     public static void drawString(float x1, float y1, float width, float height, float fontSize,
                                   String text, int color, boolean monospace, boolean noWrap) {
-        float CHAR_SPACING = 0.1f;
+        float CHAR_SPACING = 0f;
         float LINE_SPACING = 0.25f;
-        float SPACE_WIDTH = 0.5f;
 
         var x = x1;
         var y = y1;
-        for (int chr : text.toCharArray()) {
-            if (chr >= 256) {
-                chr = 0;
-            }
+        for (char chr : text.toCharArray()) {
             if (chr == '\n') {
                 y += fontSize + LINE_SPACING * fontSize;
                 x = x1;
             } else if (chr == '\r') {
                 // Ignore CR
             } else if (chr == '\t') {
-                x += (SPACE_WIDTH * 4 + CHAR_SPACING) * fontSize;
+                x += (preloadFont.spaceWidthPl * 4 + CHAR_SPACING) * fontSize;
             } else if (chr == ' ') {
-                x += (SPACE_WIDTH + CHAR_SPACING) * fontSize;
+                x += (preloadFont.spaceWidthPl + CHAR_SPACING) * fontSize;
             } else {
-                float chr_size = GLYPH_SIZES[chr];
-                float chr_left = (chr_size / 16 - 1) / 16f;
-                float chr_right = (chr_size % 16 + 1) / 16f;
+                SimpleFont.GlyphProperty glyph = preloadFont.getGlyph(chr);
+                float advance = glyph.advancePl * fontSize;
 
-                if (monospace) {
-                    if ((chr_right - chr_left) < 0.8) {
-                        if (chr_left + 0.5 > 1f) {
-                            chr_right = 1f;
-                            chr_left = 0.5f;
-                        } else {
-                            chr_right = chr_left + 0.5f;
-                        }
-                    } else {
-                        chr_right = 1f;
-                        chr_left = 0f;
-                    }
-                }
-
-                var chr_width = fontSize * (chr_right - chr_left);
-
-                if (x + chr_width + CHAR_SPACING * fontSize > x1 + width) {
+                if (x + advance + CHAR_SPACING * fontSize > x1 + width) {
                     if (noWrap) {
                         continue;
                     } else {
@@ -175,14 +127,10 @@ public class GlHelper {
                     return;
                 }
 
-                var chr_sprite_u = chr % 16;
-                var chr_sprite_v = (chr >> 4) % 16;
-                float u1 = chr_sprite_u * (1f / 16f) + chr_left * 16f / 256f;
-                float v1 = chr_sprite_v * (1f / 16f);
-                float uSpan = (chr_right - chr_left) * 16f / 256f;
-                float vSpan = 16f / 256f;
-                blit(x, y, chr_width, fontSize, u1, v1, u1 + uSpan, v1 + vSpan, color);
-                x += chr_width + CHAR_SPACING * fontSize;
+                blit(x + glyph.offsetXPl * fontSize, y + (preloadFont.baseLineYPl + glyph.offsetYPl) * fontSize,
+                        glyph.widthPl * fontSize, glyph.heightPl * fontSize,
+                        glyph.u1, glyph.v1, glyph.u2, glyph.v2, color);
+                x += advance + CHAR_SPACING * fontSize;
             }
         }
     }
@@ -207,11 +155,11 @@ public class GlHelper {
         matrix.setIdentity();
         matrix.multiply(Matrix4f.createScaleMatrix(2, -2, 1));
         matrix.multiply(Matrix4f.createTranslateMatrix(-0.5f, -0.5f, 0));
-        matrix.multiply(Matrix4f.createScaleMatrix(1f / getScaledWidth(), 1f / getScaledHeight(), 1));
+        matrix.multiply(Matrix4f.createScaleMatrix(1f / getWidth(), 1f / getHeight(), 1));
         RenderSystem.setProjectionMatrix(matrix);
     }
 
-    public static int getScaledWidth() {
+    public static int getWidth() {
         int rawWidth = Minecraft.getInstance().getWindow().getWidth();
         if (rawWidth < 854) {
             return rawWidth;
@@ -222,10 +170,10 @@ public class GlHelper {
         }
     }
 
-    public static int getScaledHeight() {
+    public static int getHeight() {
         int rawWidth = Minecraft.getInstance().getWindow().getWidth();
         int rawHeight = Minecraft.getInstance().getWindow().getHeight();
-        return (int)(rawHeight * (getScaledWidth() * 1f / rawWidth));
+        return (int)(rawHeight * (getWidth() * 1f / rawWidth));
     }
 
     public static void setMatCenterForm(float width, float height, float widthPercent) {

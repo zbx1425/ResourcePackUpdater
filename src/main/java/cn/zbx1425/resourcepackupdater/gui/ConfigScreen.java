@@ -2,6 +2,7 @@ package cn.zbx1425.resourcepackupdater.gui;
 
 import cn.zbx1425.resourcepackupdater.Config;
 import cn.zbx1425.resourcepackupdater.ResourcePackUpdater;
+import cn.zbx1425.resourcepackupdater.gui.gl.GlHelper;
 import cn.zbx1425.resourcepackupdater.mappings.Text;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;

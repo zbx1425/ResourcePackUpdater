@@ -6,15 +6,18 @@ import org.apache.commons.codec.digest.DigestUtils;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 
 public class HashCache {
 
     public HashMap<String, FileProperty> entries = new HashMap<>();
 
+    private final Path basePath;
     private boolean isDirty = false;
+
+    public HashCache(Path basePath) {
+        this.basePath = basePath;
+    }
 
     public void load(Path file) throws IOException {
         if (!Files.isRegularFile(file)) return;
@@ -50,20 +53,29 @@ public class HashCache {
         isDirty = false;
     }
 
-    public byte[] getDigest(String key, File file) throws IOException {
+    public byte[] getDigest(File file) throws IOException {
+        String key = basePath.relativize(file.toPath()).toString().replace('\\', '/');
         FileProperty entry = entries.getOrDefault(key, null);
         if (entry != null) {
             if (entry.mTime == file.lastModified()) {
                 return entry.hash;
             }
         }
-        byte[] hash = getDigest(file);
+        byte[] hash = calculateDigest(file);
         entries.put(key, new FileProperty(hash, file.lastModified()));
         isDirty = true;
         return hash;
     }
 
-    public static byte[] getDigest(File file) throws IOException {
+    public byte[] getDigestNoCache(File file) throws IOException {
+        String key = basePath.relativize(file.toPath()).toString().replace('\\', '/');
+        byte[] hash = calculateDigest(file);
+        entries.put(key, new FileProperty(hash, file.lastModified()));
+        isDirty = true;
+        return hash;
+    }
+
+    public static byte[] calculateDigest(File file) throws IOException {
         try (FileInputStream fis = new FileInputStream(file)) {
             return DigestUtils.sha1(AssetEncryption.wrapInputStream(fis));
         }

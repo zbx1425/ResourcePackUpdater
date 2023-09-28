@@ -1,6 +1,6 @@
 package cn.zbx1425.resourcepackupdater.io;
 
-import cn.zbx1425.resourcepackupdater.gui.GlHelper;
+import cn.zbx1425.resourcepackupdater.gui.gl.GlHelper;
 
 public interface ProgressReceiver {
 

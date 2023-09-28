@@ -1,6 +1,6 @@
 package cn.zbx1425.resourcepackupdater.gui.forms;
 
-import cn.zbx1425.resourcepackupdater.gui.GlHelper;
+import cn.zbx1425.resourcepackupdater.gui.gl.GlHelper;
 import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.Minecraft;
 

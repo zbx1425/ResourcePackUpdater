@@ -1,7 +1,7 @@
 package cn.zbx1425.resourcepackupdater;
 
 import cn.zbx1425.resourcepackupdater.drm.ServerLockRegistry;
-import cn.zbx1425.resourcepackupdater.gui.GlHelper;
+import cn.zbx1425.resourcepackupdater.gui.gl.GlHelper;
 import cn.zbx1425.resourcepackupdater.gui.GlProgressScreen;
 import cn.zbx1425.resourcepackupdater.io.Dispatcher;
 import cn.zbx1425.resourcepackupdater.io.network.DummyTrustManager;
@@ -14,7 +14,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.repository.PackRepository;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.core.util.ExecutorServices;
 
 import java.io.IOException;
 import java.net.http.HttpClient;

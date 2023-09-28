@@ -15,15 +15,17 @@ public class PackOutputStream extends OutputStream {
 
     private final boolean encrypt;
     private final Path target;
+    private final HashCache hashCache;
     private final byte[] expectedSha;
     private final ByteArrayOutputStream buffer = new ByteArrayOutputStream();
 
     private boolean closed = false;
 
-    public PackOutputStream(Path target, boolean encrypt, byte[] expectedSha) {
-        this.encrypt = false;
+    public PackOutputStream(Path target, boolean encrypt, HashCache hashCache, byte[] expectedSha) {
+        this.encrypt = encrypt;
         this.target = target;
         this.expectedSha = expectedSha;
+        this.hashCache = hashCache;
     }
 
     @Override
@@ -52,7 +54,7 @@ public class PackOutputStream extends OutputStream {
                 bos.write(buffer.toByteArray());
             }
         }
-        byte[] localSha = HashCache.getDigest(target.toFile());
+        byte[] localSha = hashCache.getDigestNoCache(target.toFile());
         if (!Arrays.equals(localSha, expectedSha)) {
             throw new IOException("SHA1 mismatch: " + Hex.encodeHexString(localSha) + " downloaded, " +
                     Hex.encodeHexString(expectedSha) + " expected");
