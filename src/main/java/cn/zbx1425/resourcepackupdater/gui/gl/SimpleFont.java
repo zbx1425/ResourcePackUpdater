@@ -1,6 +1,7 @@
 package cn.zbx1425.resourcepackupdater.gui.gl;
 
 import cn.zbx1425.resourcepackupdater.ResourcePackUpdater;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import it.unimi.dsi.fastutil.chars.Char2ObjectMap;
 import it.unimi.dsi.fastutil.chars.Char2ObjectOpenHashMap;
@@ -10,6 +11,7 @@ import org.apache.commons.io.IOUtils;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.Map;
 
 public class SimpleFont {
 
@@ -43,9 +45,9 @@ public class SimpleFont {
         this.sheetHeight = srcObj.get("height").getAsInt();
 
         JsonObject characterObj = srcObj.getAsJsonObject("characters");
-        for (String key : characterObj.keySet()) {
-            char codePoint = key.charAt(0);
-            glyphMap.put(codePoint, new GlyphProperty(characterObj.getAsJsonObject(key), this));
+        for (Map.Entry<String, JsonElement> entry : characterObj.entrySet()) {
+            char codePoint = entry.getKey().charAt(0);
+            glyphMap.put(codePoint, new GlyphProperty(entry.getValue().getAsJsonObject(), this));
         }
 
         baseLineYPl = -glyphMap.get('A').offsetYPl;

@@ -97,8 +97,6 @@ tasks.withType(JavaCompile).configureEach {
         options.release.set(17)
     }
     options.compilerArgs += ['-Xplugin:Manifold', '-AMC_VERSION=' + minecraft_version_int]
-
-    options.verbose = true
 }
 
 

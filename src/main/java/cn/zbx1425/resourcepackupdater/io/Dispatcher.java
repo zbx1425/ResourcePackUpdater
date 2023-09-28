@@ -121,6 +121,7 @@ public class Dispatcher {
             }
             remoteMetadata.downloadedBytes += downloadDispatcher.downloadedBytes;
             downloadDispatcher.close();
+            localMetadata.saveHashCache();
 
             cb.setInfo("", "");
             cb.setProgress(1, 1);

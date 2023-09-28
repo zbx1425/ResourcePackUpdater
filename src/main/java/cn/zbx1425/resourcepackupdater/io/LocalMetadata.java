@@ -53,7 +53,10 @@ public class LocalMetadata {
                 }
             }
         }
+        saveHashCache();
+    }
 
+    public void saveHashCache() throws IOException {
         hashCache.save(Path.of(baseDir, HASH_CACHE_FILE_NAME));
     }
 

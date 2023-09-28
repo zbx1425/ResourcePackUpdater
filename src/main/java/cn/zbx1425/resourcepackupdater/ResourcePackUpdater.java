@@ -70,12 +70,14 @@ public class ResourcePackUpdater implements ModInitializer {
 
         Dispatcher syncDispatcher = new Dispatcher();
 
-        ResourcePackUpdater.GL_PROGRESS_SCREEN.resetToSelectSource();
-        try {
-            while (ResourcePackUpdater.GL_PROGRESS_SCREEN.shouldContinuePausing(true)) {
-                Thread.sleep(50);
-            }
-        } catch (Exception ignored) { }
+        if (ResourcePackUpdater.CONFIG.sourceList.value.size() > 1) {
+            ResourcePackUpdater.GL_PROGRESS_SCREEN.resetToSelectSource();
+            try {
+                while (ResourcePackUpdater.GL_PROGRESS_SCREEN.shouldContinuePausing(true)) {
+                    Thread.sleep(50);
+                }
+            } catch (Exception ignored) { }
+        }
 
         ResourcePackUpdater.GL_PROGRESS_SCREEN.reset();
         try {
