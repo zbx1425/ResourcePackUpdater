@@ -1,5 +1,6 @@
 package cn.zbx1425.resourcepackupdater.gui.forms;
 
+import cn.zbx1425.resourcepackupdater.ResourcePackUpdater;
 import cn.zbx1425.resourcepackupdater.gui.gl.GlHelper;
 import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.Minecraft;
@@ -43,7 +44,8 @@ public class ProgressForm implements GlScreenForm {
         GlHelper.drawString(20, 180, progressFormWidth - 40, 30, 18,
                 monospace ? auxilaryInfo.substring(1) : auxilaryInfo, 0xff222222, monospace, false);
 
-        GlHelper.drawString(20, progressFormHeight - 20, 144, 16, 16, "Cancel: ESC", 0xff222222, false, true);
+        String escBtnHint = ResourcePackUpdater.CONFIG.sourceList.value.size() > 1 ? "Cancel / Use Another Source" : "Cancel";
+        GlHelper.drawString(20, progressFormHeight - 20, progressFormWidth - 40, 16, 16, escBtnHint + ": Hold ESC", 0xff222222, false, true);
 
         GlHelper.end();
     }

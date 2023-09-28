@@ -22,7 +22,7 @@ import java.util.function.Supplier;
 public class Config {
 
     public final ConfigItem<String> remoteConfigUrl = new ConfigItem<>(
-            "remoteConfigUrl", JsonElement::getAsString, JsonPrimitive::new, "");
+            "remoteConfigUrl", JsonElement::getAsString, JsonPrimitive::new, "https://mc.zbx1425.cn/jlp-srp/client_config.json");
 
     public final ConfigItem<List<SourceProperty>> sourceList = new ConfigItem<>(
         "sources",
@@ -50,7 +50,7 @@ public class Config {
     public final ConfigItem<Boolean> disableBuiltinSources = new ConfigItem<>(
         "disableBuiltinSources", JsonElement::getAsBoolean, JsonPrimitive::new, false);
     public final ConfigItem<Integer> sourceSelectDelay = new ConfigItem<>(
-            "sourceSelectDelay", JsonElement::getAsInt, JsonPrimitive::new, 8);
+            "sourceSelectDelay", JsonElement::getAsInt, JsonPrimitive::new, 6);
     public final ConfigItem<Boolean> pauseWhenSuccess = new ConfigItem<>(
         "pauseWhenSuccess", JsonElement::getAsBoolean, JsonPrimitive::new, false);
     public final ConfigItem<File> packBaseDirFile = new ConfigItem<File>(
@@ -185,12 +185,15 @@ public class Config {
         }
 
         public void load(JsonObject localObject, JsonObject remoteObject) {
-            if (localObject.has(key)) {
-                value = fromCodec.apply(localObject.get(key));
+            if (localObject.has("!" + key)) {
+                value = fromCodec.apply(localObject.get("!" + key));
                 isFromLocal = true;
             } else if (remoteObject.has(key)) {
                 value = fromCodec.apply(remoteObject.get(key));
                 isFromLocal = false;
+            } else if (localObject.has(key)) {
+                value = fromCodec.apply(localObject.get(key));
+                isFromLocal = true;
             } else {
                 value = defaultSupplier.get();
                 isFromLocal = false;

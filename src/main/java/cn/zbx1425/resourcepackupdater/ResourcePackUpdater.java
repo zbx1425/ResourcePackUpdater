@@ -68,30 +68,42 @@ public class ResourcePackUpdater implements ModInitializer {
     public static void dispatchSyncWork() {
         GlHelper.initGlStates();
 
-        Dispatcher syncDispatcher = new Dispatcher();
-
-        if (ResourcePackUpdater.CONFIG.sourceList.value.size() > 1) {
-            ResourcePackUpdater.GL_PROGRESS_SCREEN.resetToSelectSource();
-            try {
-                while (ResourcePackUpdater.GL_PROGRESS_SCREEN.shouldContinuePausing(true)) {
-                    Thread.sleep(50);
+        while (true) {
+            Dispatcher syncDispatcher = new Dispatcher();
+            if (ResourcePackUpdater.CONFIG.sourceList.value.size() > 1) {
+                ResourcePackUpdater.GL_PROGRESS_SCREEN.resetToSelectSource();
+                try {
+                    while (ResourcePackUpdater.GL_PROGRESS_SCREEN.shouldContinuePausing(true)) {
+                        Thread.sleep(50);
+                    }
+                } catch (GlHelper.MinecraftStoppingException ignored) {
+                    ServerLockRegistry.lockAllSyncedPacks = true;
+                    break;
+                } catch (Exception ignored) {
                 }
-            } catch (Exception ignored) { }
-        }
-
-        ResourcePackUpdater.GL_PROGRESS_SCREEN.reset();
-        try {
-            boolean syncSuccess = syncDispatcher.runSync(ResourcePackUpdater.CONFIG.getPackBaseDir(),
-                    ResourcePackUpdater.CONFIG.activeSource.value, ResourcePackUpdater.GL_PROGRESS_SCREEN);
-            if (syncSuccess) {
-                ServerLockRegistry.lockAllSyncedPacks = false;
-            } else {
-                ServerLockRegistry.lockAllSyncedPacks = true;
             }
 
-            Minecraft.getInstance().options.save();
-        } catch (Exception ignored) {
-            ServerLockRegistry.lockAllSyncedPacks = true;
+            ResourcePackUpdater.GL_PROGRESS_SCREEN.reset();
+            try {
+                boolean syncSuccess = syncDispatcher.runSync(ResourcePackUpdater.CONFIG.getPackBaseDir(),
+                        ResourcePackUpdater.CONFIG.activeSource.value, ResourcePackUpdater.GL_PROGRESS_SCREEN);
+                if (syncSuccess) {
+                    ServerLockRegistry.lockAllSyncedPacks = false;
+                } else {
+                    ServerLockRegistry.lockAllSyncedPacks = true;
+                }
+
+                Minecraft.getInstance().options.save();
+                break;
+            } catch (GlHelper.MinecraftStoppingException ignored) {
+                ServerLockRegistry.lockAllSyncedPacks = true;
+                if (ResourcePackUpdater.CONFIG.sourceList.value.size() <= 1) {
+                    break;
+                }
+            } catch (Exception ignored) {
+                ServerLockRegistry.lockAllSyncedPacks = true;
+                break;
+            }
         }
 
         try {
