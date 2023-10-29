@@ -43,14 +43,12 @@ public class Config {
         },
         new ArrayList<>()
     );
-    public final ConfigItem<SourceProperty> activeSource = new ConfigItem<SourceProperty>(
-        "activeSource", (json) -> new SourceProperty((JsonObject)json), SourceProperty::toJson, () -> null);
+    public final ConfigItem<SourceProperty> selectedSource = new ConfigItem<SourceProperty>(
+        "selectedSource", (json) -> new SourceProperty((JsonObject)json), SourceProperty::toJson, () -> null);
     public final ConfigItem<String> localPackName = new ConfigItem<>(
         "localPackName", JsonElement::getAsString, JsonPrimitive::new, "SyncedPack");
     public final ConfigItem<Boolean> disableBuiltinSources = new ConfigItem<>(
         "disableBuiltinSources", JsonElement::getAsBoolean, JsonPrimitive::new, false);
-    public final ConfigItem<Integer> sourceSelectDelay = new ConfigItem<>(
-            "sourceSelectDelay", JsonElement::getAsInt, JsonPrimitive::new, 6);
     public final ConfigItem<Boolean> pauseWhenSuccess = new ConfigItem<>(
         "pauseWhenSuccess", JsonElement::getAsBoolean, JsonPrimitive::new, false);
     public final ConfigItem<File> packBaseDirFile = new ConfigItem<File>(
@@ -65,7 +63,7 @@ public class Config {
         "clientEnforceVersion", JsonElement::getAsString, JsonPrimitive::new, "");
 
     public List<ConfigItem<?>> configItems = List.of(
-        remoteConfigUrl, sourceList, activeSource, localPackName, disableBuiltinSources, sourceSelectDelay,
+        remoteConfigUrl, sourceList, selectedSource, localPackName, disableBuiltinSources,
         pauseWhenSuccess, packBaseDirFile, serverLockKey, clientEnforceInstall, clientEnforceVersion
     );
 
@@ -113,17 +111,13 @@ public class Config {
         }
 
         if (!disableBuiltinSources.value) addBuiltinSources();
-        if (!sourceList.value.contains(activeSource.value)) activeSource.value = null;
-        if (activeSource.value == null) {
-            if (sourceList.value.isEmpty()) {
-                activeSource.value = new SourceProperty(
-                        "NOT CONFIGURED",
-                        "",
-                        false, false, true
-                );
-            } else {
-                activeSource.value = sourceList.value.get(0);
-            }
+        if (!sourceList.value.contains(selectedSource.value)) selectedSource.value = null;
+        if (selectedSource.value == null) {
+            selectedSource.value = new SourceProperty(
+                    "NOT CONFIGURED",
+                    "",
+                    false, false, true
+            );
         }
     }
 

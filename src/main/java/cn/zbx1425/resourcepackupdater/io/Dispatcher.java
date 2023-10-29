@@ -54,10 +54,8 @@ public class Dispatcher {
             }
             // Now, either checksum or full metadata is fetched, with the encryption switch.
 
-            localMetadata.loadHashCache();
-            cb.printLog("Hash cache had " + localMetadata.hashCache.entries.size() + " files.");
             cb.printLog("Scanning local files ...");
-            localMetadata.scanDir(remoteMetadata.encrypt);
+            localMetadata.scanDir(remoteMetadata.encrypt, cb);
             cb.amendLastLog("Done");
             byte[] localChecksum = localMetadata.getDirChecksum();
             cb.printLog("Local directory checksum is " + Hex.encodeHexString(localChecksum));

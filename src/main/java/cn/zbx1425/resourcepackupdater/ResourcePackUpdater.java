@@ -70,23 +70,28 @@ public class ResourcePackUpdater implements ModInitializer {
 
         while (true) {
             Dispatcher syncDispatcher = new Dispatcher();
-            if (ResourcePackUpdater.CONFIG.sourceList.value.size() > 1) {
-                ResourcePackUpdater.GL_PROGRESS_SCREEN.resetToSelectSource();
-                try {
-                    while (ResourcePackUpdater.GL_PROGRESS_SCREEN.shouldContinuePausing(true)) {
-                        Thread.sleep(50);
+            if (ResourcePackUpdater.CONFIG.selectedSource.value.baseUrl.isEmpty()) {
+                if (ResourcePackUpdater.CONFIG.sourceList.value.size() > 1) {
+                    ResourcePackUpdater.GL_PROGRESS_SCREEN.resetToSelectSource();
+                    try {
+                        while (ResourcePackUpdater.GL_PROGRESS_SCREEN.shouldContinuePausing(true)) {
+                            Thread.sleep(50);
+                        }
+                    } catch (GlHelper.MinecraftStoppingException ignored) {
+                        ServerLockRegistry.lockAllSyncedPacks = true;
+                        break;
+                    } catch (Exception ignored) {
                     }
-                } catch (GlHelper.MinecraftStoppingException ignored) {
-                    ServerLockRegistry.lockAllSyncedPacks = true;
-                    break;
-                } catch (Exception ignored) {
+                } else if (ResourcePackUpdater.CONFIG.sourceList.value.size() == 1) {
+                    ResourcePackUpdater.CONFIG.selectedSource.value = ResourcePackUpdater.CONFIG.sourceList.value.get(0);
+                    ResourcePackUpdater.CONFIG.selectedSource.isFromLocal = true;
                 }
             }
 
             ResourcePackUpdater.GL_PROGRESS_SCREEN.reset();
             try {
                 boolean syncSuccess = syncDispatcher.runSync(ResourcePackUpdater.CONFIG.getPackBaseDir(),
-                        ResourcePackUpdater.CONFIG.activeSource.value, ResourcePackUpdater.GL_PROGRESS_SCREEN);
+                        ResourcePackUpdater.CONFIG.selectedSource.value, ResourcePackUpdater.GL_PROGRESS_SCREEN);
                 if (syncSuccess) {
                     ServerLockRegistry.lockAllSyncedPacks = false;
                 } else {
@@ -94,9 +99,17 @@ public class ResourcePackUpdater implements ModInitializer {
                 }
 
                 Minecraft.getInstance().options.save();
+                try {
+                    ResourcePackUpdater.CONFIG.save();
+                } catch (IOException ignored) { }
                 break;
             } catch (GlHelper.MinecraftStoppingException ignored) {
                 ServerLockRegistry.lockAllSyncedPacks = true;
+                ResourcePackUpdater.CONFIG.selectedSource.value = new Config.SourceProperty(
+                        "NOT CONFIGURED",
+                        "",
+                        false, false, true
+                );
                 if (ResourcePackUpdater.CONFIG.sourceList.value.size() <= 1) {
                     break;
                 }

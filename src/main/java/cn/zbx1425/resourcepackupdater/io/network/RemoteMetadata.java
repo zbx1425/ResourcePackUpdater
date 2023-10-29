@@ -102,42 +102,6 @@ public class RemoteMetadata {
         }
     }
 
-    public void httpGetFile(Path localPath, String file, ProgressReceiver cb) throws Exception {
-        Files.deleteIfExists(localPath);
-
-        URL url = new URL(baseUrl + "/dist/" + file);
-        int retryCount = 0;
-        final int MAX_RETRIES = 3;
-        while (true) {
-            try {
-                ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                urlToStream(url, files.get(file).size, baos, cb);
-                if (encrypt) {
-                    AssetEncryption.writeEncrypted(baos.toByteArray(), localPath.toFile());
-                } else {
-                    try (BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(localPath.toFile()))) {
-                        bos.write(baos.toByteArray());
-                    }
-                }
-                byte[] expectedSha = files.get(file).hash;
-                byte[] localSha = HashCache.calculateDigest(localPath.toFile());
-                if (!Arrays.equals(localSha, expectedSha)) {
-                    throw new IOException("SHA1 mismatch: " + Hex.encodeHexString(localSha) + " downloaded, " +
-                            Hex.encodeHexString(expectedSha) + " expected");
-                }
-                return;
-            } catch (Exception ex) {
-                if (retryCount < MAX_RETRIES) {
-                    cb.printLog(ex.toString());
-                    retryCount++;
-                    cb.printLog(String.format("Retrying (%d/%d) ...", retryCount, MAX_RETRIES));
-                } else {
-                    throw ex;
-                }
-            }
-        }
-    }
-
     public void beginDownloads(ProgressReceiver cb) throws IOException {
         downloadStartTime = System.currentTimeMillis();
         downloadedBytes = 0;
@@ -173,10 +137,12 @@ public class RemoteMetadata {
                             if (fileSize > 0) {
                                 String message = String.format(": %5d KiB / %5d KiB; %5d KiB/s",
                                         amountOfBytesWritten / 1024, fileSize / 1024, elapsedTimeSecs == 0 ? 0 : downloadedBytes / elapsedTimeSecs / 1024);
+                                cb.setProgress(amountOfBytesWritten * 1f / fileSize, 0);
                                 cb.setInfo(String.format("%.2f%%", amountOfBytesWritten * 1f / fileSize * 100), message);
                             } else {
                                 String message = String.format(": %5d KiB downloaded; %5d KiB/s",
                                         amountOfBytesWritten / 1024, elapsedTimeSecs == 0 ? 0 : downloadedBytes / elapsedTimeSecs / 1024);
+                                cb.setProgress((System.currentTimeMillis() % 1000) / 1000f, 0);
                                 cb.setInfo(String.format("%.2f%%", (System.currentTimeMillis() % 1000) / 1000f * 100), message);
                             }
                             lastAmount = amountOfBytesWritten;

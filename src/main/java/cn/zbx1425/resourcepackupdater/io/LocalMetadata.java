@@ -32,9 +32,12 @@ public class LocalMetadata {
         hashCache.load(Path.of(baseDir, HASH_CACHE_FILE_NAME));
     }
 
-    public void scanDir(boolean shouldEncrypt) throws Exception {
+    public void scanDir(boolean shouldEncrypt, ProgressReceiver cb) throws Exception {
+        loadHashCache();
         dirs.clear();
         files.clear();
+
+        int filesScanned = 0;
 
         Path basePath = Paths.get(baseDir);
         if (!Files.isDirectory(basePath)) {
@@ -49,6 +52,11 @@ public class LocalMetadata {
                 } else {
                     if (entry.getFileName().toString().toLowerCase(Locale.ROOT).equals("desktop.ini")) continue;
                     if (shouldEncrypt) AssetEncryption.encryptIfRaw(entry.toFile());
+                    filesScanned++;
+                    if (filesScanned % 200 == 0) {
+                        cb.setProgress((float)filesScanned / hashCache.entries.size(), 0);
+                        cb.setInfo(filesScanned + " / " + hashCache.entries.size(), "");
+                    }
                     files.put(relPath, hashCache.getDigest(entry.toFile()));
                 }
             }

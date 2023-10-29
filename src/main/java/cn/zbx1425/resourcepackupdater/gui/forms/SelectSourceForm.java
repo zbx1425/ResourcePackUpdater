@@ -13,7 +13,6 @@ public class SelectSourceForm implements GlScreenForm {
 
     int selectedIndex = -1;
 
-    long countdownStartTime = -1;
     boolean countdownExpired = false;
 
     @Override
@@ -21,25 +20,19 @@ public class SelectSourceForm implements GlScreenForm {
         int sourceSize = ResourcePackUpdater.CONFIG.sourceList.value.size() + 1;
         selectSourceFormHeight = 30 + 30 + 30 + sourceSize * 30 + (sourceSize - 1) * 10;
         if (selectedIndex == -1) {
-            selectedIndex = ResourcePackUpdater.CONFIG.sourceList.value.indexOf(ResourcePackUpdater.CONFIG.activeSource.value);
+            selectedIndex = ResourcePackUpdater.CONFIG.sourceList.value.indexOf(ResourcePackUpdater.CONFIG.selectedSource.value);
+        }
+        if (selectedIndex == -1) {
+            selectedIndex = 0;
         }
 
         GlHelper.setMatCenterForm(selectSourceFormWidth, selectSourceFormHeight, 0.6f);
         GlHelper.begin(GlHelper.PRELOAD_FONT_TEXTURE);
         GlScreenForm.drawShadowRect(selectSourceFormWidth, selectSourceFormHeight, 0xffdee6ea);
 
-        if (countdownStartTime > 0) {
-            long countdown = ResourcePackUpdater.CONFIG.sourceSelectDelay.value - (System.currentTimeMillis() - countdownStartTime) / 1000;
-            if (countdown > 0) {
-                GlHelper.drawString(30, 20, selectSourceFormWidth - 60, 30, 20,
-                        String.format("Select Source (Timeout in %ds)", countdown), 0xff222222, false, false);
-            } else {
-                countdownExpired = true;
-            }
-        } else {
-            GlHelper.drawString(30, 20, selectSourceFormWidth - 60, 30, 20,
-                    "Select Source", 0xff222222, false, false);
-        }
+        GlHelper.drawString(20, 15, selectSourceFormWidth - 40, 50, 18,
+                "Select a Source\nDon't worry, you can later get back and try another one.", 0xff222222, false, false);
+
         for (int i = 0; i < sourceSize; i++) {
             if (i == selectedIndex) {
                 GlHelper.blit(30, 30 + 30 + i * 40, selectSourceFormWidth - 60, 30, 0xff63a0c6);
@@ -50,6 +43,9 @@ public class SelectSourceForm implements GlScreenForm {
             GlHelper.drawString(30 + 15, 30 + 30 + i * 40 + 5, selectSourceFormWidth - 90, 40, 20,
                     btnLabel, 0xff222222, false, false);
         }
+
+        String escBtnHint = "W/S: Select, Enter: Confirm";
+        GlHelper.drawString(20, selectSourceFormHeight - 20, selectSourceFormWidth - 40, 16, 16, escBtnHint, 0xff222222, false, true);
 
         GlHelper.end();
     }
@@ -63,13 +59,11 @@ public class SelectSourceForm implements GlScreenForm {
             if (heldKey != InputConstants.KEY_UP && heldKey != InputConstants.KEY_W) {
                 selectedIndex = Math.max(0, selectedIndex - 1);
                 heldKey = InputConstants.KEY_UP;
-                countdownStartTime = -1;
             }
         } else if (InputConstants.isKeyDown(glfwWindow, InputConstants.KEY_DOWN) || InputConstants.isKeyDown(glfwWindow, InputConstants.KEY_S)) {
             if (heldKey != InputConstants.KEY_DOWN && heldKey != InputConstants.KEY_S) {
                 selectedIndex = Math.min(ResourcePackUpdater.CONFIG.sourceList.value.size(), selectedIndex + 1);
                 heldKey = InputConstants.KEY_DOWN;
-                countdownStartTime = -1;
             }
         } else if (InputConstants.isKeyDown(glfwWindow, InputConstants.KEY_RETURN)
             || InputConstants.isKeyDown(glfwWindow, InputConstants.KEY_SPACE)
@@ -78,8 +72,8 @@ public class SelectSourceForm implements GlScreenForm {
             if (selectedIndex == ResourcePackUpdater.CONFIG.sourceList.value.size()) {
                 throw new GlHelper.MinecraftStoppingException();
             }
-            ResourcePackUpdater.CONFIG.activeSource.value = ResourcePackUpdater.CONFIG.sourceList.value.get(selectedIndex);
-            ResourcePackUpdater.CONFIG.activeSource.isFromLocal = true;
+            ResourcePackUpdater.CONFIG.selectedSource.value = ResourcePackUpdater.CONFIG.sourceList.value.get(selectedIndex);
+            ResourcePackUpdater.CONFIG.selectedSource.isFromLocal = true;
             try {
                 ResourcePackUpdater.CONFIG.save();
             } catch (IOException ignored) { }
@@ -94,11 +88,6 @@ public class SelectSourceForm implements GlScreenForm {
     public void reset() {
         selectedIndex = -1;
         heldKey = -1;
-        if (ResourcePackUpdater.CONFIG.sourceSelectDelay.value > 0) {
-            countdownStartTime = System.currentTimeMillis();
-        } else {
-            countdownStartTime = -1;
-        }
         countdownExpired = false;
     }
 

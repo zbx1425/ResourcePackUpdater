@@ -12,6 +12,8 @@ public class HashCache {
 
     public HashMap<String, FileProperty> entries = new HashMap<>();
 
+    public HashMap<String, FileProperty> entriesToSave = new HashMap<>();
+
     private final Path basePath;
     private boolean isDirty = false;
 
@@ -41,8 +43,8 @@ public class HashCache {
         if (!isDirty) return;
         try (DataOutputStream stream = new DataOutputStream(new BufferedOutputStream(Files.newOutputStream(file)))) {
             stream.writeInt(1);
-            stream.writeInt(entries.size());
-            for (var entry : entries.entrySet()) {
+            stream.writeInt(entriesToSave.size());
+            for (var entry : entriesToSave.entrySet()) {
                 stream.writeInt(entry.getKey().length());
                 stream.writeBytes(entry.getKey());
                 stream.writeLong(entry.getValue().mTime);
@@ -58,11 +60,14 @@ public class HashCache {
         FileProperty entry = entries.getOrDefault(key, null);
         if (entry != null) {
             if (entry.mTime == file.lastModified()) {
+                entriesToSave.put(key, entry);
                 return entry.hash;
             }
         }
         byte[] hash = calculateDigest(file);
-        entries.put(key, new FileProperty(hash, file.lastModified()));
+        entry = new FileProperty(hash, file.lastModified());
+        entries.put(key, entry);
+        entriesToSave.put(key, entry);
         isDirty = true;
         return hash;
     }

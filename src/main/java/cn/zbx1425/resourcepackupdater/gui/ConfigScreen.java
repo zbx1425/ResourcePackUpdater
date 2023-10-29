@@ -47,7 +47,7 @@ public class ConfigScreen extends Screen {
         int btnY = 90;
         for (Config.SourceProperty source : ResourcePackUpdater.CONFIG.sourceList.value) {
             Button btnUseSource = new Button(PADDING + PADDING, btnY, btnWidthInner, 20, Text.translatable(source.name), (btn) -> {
-                ResourcePackUpdater.CONFIG.activeSource.value = source;
+                ResourcePackUpdater.CONFIG.selectedSource.value = source;
                 try {
                     ResourcePackUpdater.CONFIG.save();
                 } catch (IOException e) {
@@ -64,7 +64,7 @@ public class ConfigScreen extends Screen {
 
     private void updateBtnEnable() {
         for (var entry : sourceButtons.entrySet()) {
-            entry.getValue().active = !ResourcePackUpdater.CONFIG.activeSource.value.equals(entry.getKey());
+            entry.getValue().active = !ResourcePackUpdater.CONFIG.selectedSource.value.equals(entry.getKey());
         }
     }
 
