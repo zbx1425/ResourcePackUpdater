@@ -55,7 +55,7 @@ public class HashCache {
         isDirty = false;
     }
 
-    public byte[] getDigest(File file) throws IOException {
+    public byte[] getDigest(File file) {
         String key = basePath.relativize(file.toPath()).toString().replace('\\', '/');
         FileProperty entry = entries.getOrDefault(key, null);
         if (entry != null) {
@@ -64,7 +64,12 @@ public class HashCache {
                 return entry.hash;
             }
         }
-        byte[] hash = calculateDigest(file);
+        byte[] hash;
+        try {
+            hash = calculateDigest(file);
+        } catch (IOException ex) {
+            hash = new byte[20];
+        }
         entry = new FileProperty(hash, file.lastModified());
         entries.put(key, entry);
         entriesToSave.put(key, entry);
@@ -72,9 +77,14 @@ public class HashCache {
         return hash;
     }
 
-    public byte[] getDigestNoCache(File file) throws IOException {
+    public byte[] getDigestNoCache(File file) {
         String key = basePath.relativize(file.toPath()).toString().replace('\\', '/');
-        byte[] hash = calculateDigest(file);
+        byte[] hash;
+        try {
+            hash = calculateDigest(file);
+        } catch (IOException ex) {
+            hash = new byte[20];
+        }
         entries.put(key, new FileProperty(hash, file.lastModified()));
         isDirty = true;
         return hash;

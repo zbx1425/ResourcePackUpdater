@@ -48,9 +48,9 @@ public class DownloadDispatcher {
                         task.failedAttempts++;
                         if (task.failedAttempts < MAX_RETRIES) {
                             delayedProgresses.add(() -> {
+                                progressReceiver.printLog(String.format("Retry (%d/%d) for %s due to error:",
+                                        task.failedAttempts, MAX_RETRIES, task.fileName));
                                 progressReceiver.printLog(ex.toString());
-                                progressReceiver.printLog(String.format("Retry (%d/%d) for %s (%s)",
-                                        task.failedAttempts, MAX_RETRIES, task.fileName, ex.getMessage()));
                             });
                         } else {
                             throw ex;

@@ -30,7 +30,7 @@ public class Dispatcher {
                 throw new IOException("There is no source configured. Install the config file to your config folder!");
             }
 
-            cb.printLog("Resource Pack Updater v" + ResourcePackUpdater.MOD_VERSION + " © Zbx1425, www.zbx1425.cn");
+            cb.printLog("Resource Pack Updater v" + ResourcePackUpdater.MOD_VERSION + " (C) Zbx1425, www.zbx1425.cn");
             cb.printLog("Server: " + source.baseUrl);
             cb.printLog("Target: " + baseDir);
             cb.printLog("");
@@ -108,7 +108,7 @@ public class Dispatcher {
             DownloadDispatcher downloadDispatcher = new DownloadDispatcher(cb);
             for (String file : Stream.concat(filesToCreate.stream(), filesToUpdate.stream()).toList()) {
                 DownloadTask task = new DownloadTask(downloadDispatcher,
-                        remoteMetadata.baseUrl + "/dist/" + file, remoteMetadata.files.get(file).size);
+                        remoteMetadata.baseUrl + "/dist/" + file, file, remoteMetadata.files.get(file).size);
                 downloadDispatcher.dispatch(task, () -> new PackOutputStream(Paths.get(baseDir, file),
                         remoteMetadata.encrypt, localMetadata.hashCache, remoteMetadata.files.get(file).hash));
             }

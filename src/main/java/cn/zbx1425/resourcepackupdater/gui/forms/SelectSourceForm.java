@@ -31,7 +31,7 @@ public class SelectSourceForm implements GlScreenForm {
         GlScreenForm.drawShadowRect(selectSourceFormWidth, selectSourceFormHeight, 0xffdee6ea);
 
         GlHelper.drawString(20, 15, selectSourceFormWidth - 40, 50, 18,
-                "Select a Source\nDon't worry, you can later get back and try another one.", 0xff222222, false, false);
+                "Select a Server to Download Resource Pack from\nDon't worry, you can later get back and try another one.", 0xff222222, false, false);
 
         for (int i = 0; i < sourceSize; i++) {
             if (i == selectedIndex) {

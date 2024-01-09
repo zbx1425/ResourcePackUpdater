@@ -51,7 +51,8 @@ public class LocalMetadata {
                     dirs.add(relPath);
                 } else {
                     if (entry.getFileName().toString().toLowerCase(Locale.ROOT).equals("desktop.ini")) continue;
-                    if (shouldEncrypt) AssetEncryption.encryptIfRaw(entry.toFile());
+                    // shouldEncrypt check cancelled for now
+                    // if (shouldEncrypt) AssetEncryption.encryptIfRaw(entry.toFile());
                     filesScanned++;
                     if (filesScanned % 200 == 0) {
                         cb.setProgress((float)filesScanned / hashCache.entries.size(), 0);

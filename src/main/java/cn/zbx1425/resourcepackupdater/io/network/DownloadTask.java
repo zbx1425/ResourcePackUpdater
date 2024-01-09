@@ -26,10 +26,10 @@ public class DownloadTask {
 
     public int failedAttempts = 0;
 
-    public DownloadTask(DownloadDispatcher dispatcher, String url, long expectedSize) {
+    public DownloadTask(DownloadDispatcher dispatcher, String url, String fileName, long expectedSize) {
         this.dispatcher = dispatcher;
         this.requestUri = URI.create(url);
-        this.fileName = url.substring(url.lastIndexOf('/') + 1);
+        this.fileName = fileName;
         this.expectedSize = expectedSize;
     }
 
