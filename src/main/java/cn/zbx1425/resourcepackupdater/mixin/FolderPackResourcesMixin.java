@@ -101,11 +101,7 @@ public abstract class FolderPackResourcesMixin extends AbstractPackResources {
     }
 
     @Inject(method = "listResources", at = @At("HEAD"), cancellable = true)
-#if MC_VERSION >= "11900"
     void getResources(PackType packType, String namespace, String path, ResourceOutput resourceOutput, CallbackInfo ci) {
-#else
-    void getResources(PackType type, String namespace, String path, int maxDepth, Predicate<ResourceLocation> filter, CallbackInfoReturnable<Collection<ResourceLocation>> cir) {
-#endif
         if (getCanonicalRoot().equals(ResourcePackUpdater.CONFIG.packBaseDirFile.value)) {
             if (ServerLockRegistry.shouldRefuseProvidingFile(null)) {
                 ci.cancel();

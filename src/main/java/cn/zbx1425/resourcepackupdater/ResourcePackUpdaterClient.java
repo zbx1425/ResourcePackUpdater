@@ -5,11 +5,7 @@ import cn.zbx1425.resourcepackupdater.gui.GlProgressScreen;
 import cn.zbx1425.resourcepackupdater.gui.gl.GlHelper;
 import cn.zbx1425.resourcepackupdater.io.Dispatcher;
 import cn.zbx1425.resourcepackupdater.io.network.DummyTrustManager;
-import cn.zbx1425.resourcepackupdater.network.ClientVersionC2SPacket;
-import cn.zbx1425.resourcepackupdater.network.ServerLockS2CPacket;
 import net.fabricmc.api.ClientModInitializer;
-import net.fabricmc.fabric.api.client.networking.v1.ClientConfigurationConnectionEvents;
-import net.fabricmc.fabric.api.client.networking.v1.ClientConfigurationNetworking;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Options;
 import net.minecraft.server.packs.repository.PackRepository;
@@ -42,16 +38,6 @@ public class ResourcePackUpdaterClient implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
-        ClientConfigurationConnectionEvents.INIT.register((handler, client) -> {
-            ServerLockRegistry.onLoginInitiated();
-        });
-        ClientConfigurationNetworking.registerGlobalReceiver(ServerLockS2CPacket.TYPE, (packet, sender) -> {
-            ServerLockRegistry.onSetServerLock(packet.serverLockKey);
-            sender.sendPacket(new ClientVersionC2SPacket(ResourcePackUpdater.MOD_VERSION));
-        });
-        ClientConfigurationConnectionEvents.READY.register((handler, client) -> {
-            ServerLockRegistry.onAfterSetServerLock();
-        });
     }
 
     public static void dispatchSyncWork() {

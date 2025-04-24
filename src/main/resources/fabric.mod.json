@@ -19,9 +19,6 @@
     ],
     "client": [
       "cn.zbx1425.resourcepackupdater.ResourcePackUpdaterClient"
-    ],
-    "modmenu": [
-      "cn.zbx1425.resourcepackupdater.ModMenuApiImpl"
     ]
   },
   "depends": {

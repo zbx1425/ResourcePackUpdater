@@ -2,7 +2,7 @@ import groovy.json.JsonSlurper
 import org.apache.tools.ant.filters.ReplaceTokens
 
 plugins {
-    id 'fabric-loom' version '1.7-SNAPSHOT'
+    id 'fabric-loom' version '+'
     id "de.undercouch.download" version "4.1.2"
     id 'maven-publish'
 }
@@ -10,7 +10,7 @@ plugins {
 version = project.mod_version
 group = project.maven_group
 
-String default_minecraft_version = "1.16.5"
+String default_minecraft_version = "1.20.1"
 Properties localProperties = new Properties()
 String minecraft_version
 if (project.rootProject.file('build.properties').exists()) {
@@ -34,9 +34,7 @@ String parchment_version = is_1_19_3 ? "N/A" : new XmlSlurper().parse("https://l
 
 
 rootProject.ext.fabric_loader_version = new JsonSlurper().parse(("https://meta.fabricmc.net/v2/versions/loader/" + minecraft_version).toURL())[0]["loader"]["version"]
-rootProject.ext.forge_version = minecraft_version + "-" + new JsonSlurper().parse(("https://files.minecraftforge.net/net/minecraftforge/forge/promotions_slim.json").toURL())["promos"][minecraft_version + "-latest"]
 rootProject.ext.fabric_api_version = getModrinthVersion("fabric", minecraft_version, "fabric-api")
-rootProject.ext.mod_menu_version = getModrinthVersion("fabric", minecraft_version, "modmenu")
 
 repositories {
     // Add repositories to retrieve artifacts from in here.
@@ -104,7 +102,7 @@ tasks.withType(JavaCompile).configureEach {
 
 task setupFiles() {
     download {
-        src "https://github.com/jonafanho/Minecraft-Mappings/archive/refs/heads/1.${minecraft_main_version}${is_1_19_3 ? ".3" : ""}.zip"
+        src "https://bgithub.xyz/jonafanho/Minecraft-Mappings/archive/refs/heads/1.${minecraft_main_version}${is_1_19_3 ? ".3" : ""}.zip"
         dest "src/main/java/cn/zbx1425/resourcepackupdater/mappings/files.zip"
         overwrite true
     }

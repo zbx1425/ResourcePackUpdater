@@ -13,11 +13,7 @@ import java.io.InputStream;
 import java.util.Objects;
 import java.util.Set;
 
-#if MC_VERSION >= "11900"
 public class PreloadTextureResource extends Resource {
-#else
-public class PreloadTextureResource implements Resource {
-#endif
 
     public PreloadTextureResource(ResourceLocation resourceLocation) {
         super(new DummyPackResources(), () ->
