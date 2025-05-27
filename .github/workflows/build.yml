@@ -32,7 +32,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Fabric Artifacts
-          pattern: |
-            build/libs/*.jar
-            !build/libs/*-sources.jar
-          merge-multiple: true
+          path: build/libs
