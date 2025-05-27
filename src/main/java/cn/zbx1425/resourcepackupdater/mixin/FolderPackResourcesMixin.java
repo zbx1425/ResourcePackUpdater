@@ -3,8 +3,11 @@ package cn.zbx1425.resourcepackupdater.mixin;
 import cn.zbx1425.resourcepackupdater.ResourcePackUpdater;
 import cn.zbx1425.resourcepackupdater.drm.AssetEncryption;
 import cn.zbx1425.resourcepackupdater.drm.ServerLockRegistry;
+import cn.zbx1425.resourcepackupdater.drm.WrappedResourceOutput;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import net.minecraft.DetectedVersion;
 import net.minecraft.FileUtil;
 import net.minecraft.resources.ResourceLocation;
@@ -66,10 +69,8 @@ public abstract class FolderPackResourcesMixin extends AbstractPackResources {
                 } else {
                     cir.setReturnValue(() -> AssetEncryption.wrapInputStream(new FileInputStream(path.toFile())));
                 }
-                cir.cancel();
             } else {
                 cir.setReturnValue(null);
-                cir.cancel();
             }
         }
     }
@@ -81,42 +82,40 @@ public abstract class FolderPackResourcesMixin extends AbstractPackResources {
             var decomposeResult = FileUtil.decomposePath(location.getPath()).get();
             if (decomposeResult.left().isEmpty()) {
                 cir.setReturnValue(null);
-                cir.cancel();
                 return;
             }
             Path path2 = FileUtil.resolvePath(path, decomposeResult.left().get());
             if (ServerLockRegistry.shouldRefuseProvidingFile(path2.toString())) {
                 cir.setReturnValue(null);
-                cir.cancel();
                 return;
             }
             if (Files.exists(path2)) {
                 cir.setReturnValue(() -> AssetEncryption.wrapInputStream(new FileInputStream(path2.toFile())));
-                cir.cancel();
             } else {
                 cir.setReturnValue(null);
-                cir.cancel();
             }
         }
     }
 
-    @Inject(method = "listResources", at = @At("HEAD"), cancellable = true)
-#if MC_VERSION >= "11900"
-    void getResources(PackType packType, String namespace, String path, ResourceOutput resourceOutput, CallbackInfo ci) {
-#else
-    void getResources(PackType type, String namespace, String path, int maxDepth, Predicate<ResourceLocation> filter, CallbackInfoReturnable<Collection<ResourceLocation>> cir) {
-#endif
+    @WrapMethod(method = "listResources")
+    void getResources(PackType packType, String namespace, String path, ResourceOutput resourceOutput, Operation<Void> original) {
         if (getCanonicalRoot().equals(ResourcePackUpdater.CONFIG.packBaseDirFile.value)) {
             if (ServerLockRegistry.shouldRefuseProvidingFile(null)) {
-                ci.cancel();
+                return;
             }
+
+            original.call(packType, namespace, path, new WrappedResourceOutput(resourceOutput));
+            return;
         }
+
+        original.call(packType, namespace, path, resourceOutput);
     }
+
     @Inject(method = "getNamespaces", at = @At("HEAD"), cancellable = true)
     void getNamespaces(PackType type, CallbackInfoReturnable<Set<String>> cir) {
         if (getCanonicalRoot().equals(ResourcePackUpdater.CONFIG.packBaseDirFile.value)) {
             if (ServerLockRegistry.shouldRefuseProvidingFile(null)) {
-                cir.setReturnValue(Collections.emptySet()); cir.cancel();
+                cir.setReturnValue(Collections.emptySet());
             }
         }
     }

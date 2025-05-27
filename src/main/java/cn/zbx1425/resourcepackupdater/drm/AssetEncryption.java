@@ -15,7 +15,7 @@ public class AssetEncryption {
 
     private static final byte[] HEADER_MAGIC = "ZBXNMB10".getBytes(StandardCharsets.UTF_8);
 
-    public static boolean isEncrypted(FileInputStream fis) throws IOException {
+    public static boolean isFisEncrypted(FileInputStream fis) throws IOException {
         fis.getChannel().position(0);
         boolean result = Arrays.equals(fis.readNBytes(HEADER_MAGIC.length), HEADER_MAGIC);
         if (!result) fis.getChannel().position(0);
@@ -23,28 +23,43 @@ public class AssetEncryption {
     }
 
     public static InputStream wrapInputStream(FileInputStream fis) throws IOException {
-        if (isEncrypted(fis)) {
-            try (DataInputStream dis = new DataInputStream(fis)) {
-                int versionMajor = dis.readInt();
-                int versionMinor = dis.readInt();
-                byte[] dContent;
-                MessageDigest sha256 = MessageDigest.getInstance("SHA-256");
-                byte[] key = dis.readNBytes(32);
-                SecretKeySpec aesKey = new SecretKeySpec(key, "AES");
-                byte[] iv = Arrays.copyOfRange(sha256.digest(key), 0, 16);
-                IvParameterSpec aesIv = new IvParameterSpec(iv);
-
-                int len = dis.readInt();
-                byte[] eContent = dis.readNBytes(len);
-                Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
-                cipher.init(Cipher.DECRYPT_MODE, aesKey, aesIv);
-                dContent = cipher.doFinal(eContent);
-                return new ByteArrayInputStream(dContent);
-            } catch (Exception ex) {
-                throw new IOException(ex);
-            }
+        if (isFisEncrypted(fis)) {
+            return decryptInputStream(fis);
         } else {
             return fis;
+        }
+    }
+
+    public static InputStream wrapInputStream(InputStream is) throws IOException {
+        byte[] header = is.readNBytes(HEADER_MAGIC.length);
+        if (header.length != HEADER_MAGIC.length) {
+            return new ByteArrayInputStream(header);
+        }
+        if (!Arrays.equals(header, HEADER_MAGIC)) {
+            return new SequenceInputStream(new ByteArrayInputStream(header), is);
+        }
+        return decryptInputStream(is);
+    }
+
+    private static InputStream decryptInputStream(InputStream is) throws IOException {
+        try (DataInputStream dis = new DataInputStream(is)) {
+            int versionMajor = dis.readInt();
+            int versionMinor = dis.readInt();
+            byte[] dContent;
+            MessageDigest sha256 = MessageDigest.getInstance("SHA-256");
+            byte[] key = dis.readNBytes(32);
+            SecretKeySpec aesKey = new SecretKeySpec(key, "AES");
+            byte[] iv = Arrays.copyOfRange(sha256.digest(key), 0, 16);
+            IvParameterSpec aesIv = new IvParameterSpec(iv);
+
+            int len = dis.readInt();
+            byte[] eContent = dis.readNBytes(len);
+            Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+            cipher.init(Cipher.DECRYPT_MODE, aesKey, aesIv);
+            dContent = cipher.doFinal(eContent);
+            return new ByteArrayInputStream(dContent);
+        } catch (Exception ex) {
+            throw new IOException(ex);
         }
     }
 
@@ -81,7 +96,7 @@ public class AssetEncryption {
     public static void encryptIfRaw(File target) throws IOException {
         byte[] src;
         try (FileInputStream fis = new FileInputStream(target)) {
-            if (isEncrypted(fis)) return;
+            if (isFisEncrypted(fis)) return;
             src = IOUtils.toByteArray(fis);
         }
         writeEncrypted(src, target);
